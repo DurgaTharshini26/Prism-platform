@@ -1,5 +1,6 @@
 import asyncio
 import json
+from contextlib import asynccontextmanager
 import os
 import sys
 import time
@@ -93,8 +94,21 @@ _PROJECT_ROOT = Path(__file__).resolve().parents[1]
 _FRONTEND_DIR = Path(os.getenv("PRISM_FRONTEND_DIR") or (_PROJECT_ROOT / "frontend" / "out")).resolve()
 _RESERVED_FRONTEND_PATHS = {"api", "ws", "healthz", "docs", "redoc", "openapi.json"}
 
+@asynccontextmanager
+async def _lifespan(_app: FastAPI):
+    base_note = f" (public base path: {_BASE_PATH})" if _BASE_PATH else ""
+    print(
+        f"\n  PRISM is running on http://localhost:8080{base_note}\n"
+        "  ⭐ If you find it useful, star the repo: "
+        "https://github.com/NovaCode37/Prism-platform\n",
+        flush=True,
+    )
+    _start_watchlist_scheduler()
+    yield
+
 app = FastAPI(
     title="OSINT Toolkit",
+    lifespan=_lifespan,
     version=PRISM_VERSION,
     root_path=_BASE_PATH,
     docs_url=None if _disable_docs else "/docs",
@@ -128,17 +142,6 @@ app.add_middleware(
     allow_headers=["Content-Type", "X-API-Key", "Authorization"],
     allow_credentials=False,
 )
-
-@app.on_event("startup")
-async def _startup_banner() -> None:
-    base_note = f" (public base path: {_BASE_PATH})" if _BASE_PATH else ""
-    print(
-        f"\n  PRISM is running on http://localhost:8080{base_note}\n"
-        "  ⭐ If you find it useful, star the repo: "
-        "https://github.com/NovaCode37/Prism-platform\n",
-        flush=True,
-    )
-    _start_watchlist_scheduler()
 
 _scans: Dict[str, Dict] = {}
 _queues: Dict[str, asyncio.Queue] = {}
@@ -372,14 +375,20 @@ def _watchlist_scheduler_loop() -> None:
             pass
         time.sleep(poll)
 
-_watchlist_thread_started = False
+_WATCHLIST_THREAD_NAME = "prism-watchlist-scheduler"
 
 def _start_watchlist_scheduler() -> None:
-    global _watchlist_thread_started
-    if _watchlist_thread_started or not env_flag("WATCHLIST_SCHEDULER", True):
+    if not env_flag("WATCHLIST_SCHEDULER", True):
         return
-    _watchlist_thread_started = True
-    threading.Thread(target=_watchlist_scheduler_loop, daemon=True).start()
+    # Look for the running thread rather than a module-level flag. Re-importing
+    # this module (the test suite does it on every _load_app) re-runs every
+    # top-level assignment, so a flag came back False and the next startup
+    # launched another scheduler thread alongside the one still looping.
+    if any(t.name == _WATCHLIST_THREAD_NAME and t.is_alive() for t in threading.enumerate()):
+        return
+    threading.Thread(
+        target=_watchlist_scheduler_loop, name=_WATCHLIST_THREAD_NAME, daemon=True
+    ).start()
 
 def _send_webhook(url: str, payload: Dict[str, Any]) -> None:
     from urllib.parse import urlparse
