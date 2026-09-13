@@ -6,6 +6,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [2.9.1] — 2026-09-13
+
+### Fixed
+- The AI request timeout was hardcoded at 30 seconds, which is too short for slower models or when the call goes through a proxy, so a working provider would fail with a read timeout. It is now `LLM_TIMEOUT` (default 90 seconds), with a separate short connect timeout.
+
+---
+
 ## [2.9.0] — 2026-09-10
 
 Most of this release came from contributors. Names are on the pull requests.
@@ -222,7 +229,6 @@ Most of this release came from contributors. Names are on the pull requests.
 ### Changed
 - Sidebar refactored to use i18n module labels (`sidebar.modules.<id>`) and localized scan type buttons.
 - `_rate_limit_exceeded_handler` replaces inline lambda for proper 429 response headers.
-
 
 ---
 

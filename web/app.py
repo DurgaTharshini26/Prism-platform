@@ -1277,7 +1277,7 @@ def _call_llm(provider: Dict[str, str], payload: Dict[str, Any]) -> Dict[str, An
             headers={"Authorization": f"Bearer {provider['key']}", "Content-Type": "application/json",
                      "HTTP-Referer": "https://getprism.su", "X-Title": "PRISM OSINT"},
             json=body,
-            timeout=30,
+            timeout=(10, int(os.getenv("LLM_TIMEOUT", "90") or 90)),
             proxies=_LLM_PROXIES,
         )
     except Exception as e:
