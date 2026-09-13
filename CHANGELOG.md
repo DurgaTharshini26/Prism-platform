@@ -6,6 +6,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [2.9.2] — 2026-09-13
+
+### Changed
+- The demo's AI panel used to say analysis did not work at all, because the hosting region is blocked by every LLM provider. The demo now routes those calls through a proxy, so they go through, just slowly. The on-page notice and the FAQ say that instead of calling it broken.
+
+---
+
 ## [2.9.1] — 2026-09-13
 
 ### Fixed

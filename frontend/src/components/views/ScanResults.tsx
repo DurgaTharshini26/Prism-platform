@@ -1801,13 +1801,9 @@ export function ScanResults({ scan, onHome }: Props) {
               <div className="flex gap-2.5 rounded-card border border-yellow/40 bg-yellow/10 p-3 mb-3">
                 <AlertTriangle size={15} className="text-yellow shrink-0 mt-px" />
                 <div className="text-[12px] text-text-1 leading-relaxed">
-                  <div className="font-semibold mb-1">AI analysis does not work on this public demo</div>
+                  <div className="font-semibold mb-1">AI analysis may take a while on this demo</div>
                   <div className="text-text-2">
-                    {"The demo runs on shared hosting whose region every hosted LLM provider refuses at their edge, so the request never reaches a model. Nothing here is broken and no key is missing — the rest of the scan is unaffected. Self-host PRISM and point "}
-                    <code className="font-mono text-[11px]">LLM_BASE_URL</code>
-                    {" and "}
-                    <code className="font-mono text-[11px]">LLM_API_KEY</code>
-                    {" at your own provider, or run a local model, and this panel works normally."}
+                    {"The demo server sits in a region every hosted LLM provider blocks, so the request is routed out through a proxy before it reaches a model. It works, it is just slow, so give the summary up to a minute or two. Self-host PRISM with your own provider and it responds at normal speed."}
                   </div>
                 </div>
               </div>
@@ -1829,7 +1825,7 @@ export function ScanResults({ scan, onHome }: Props) {
                 <div className="text-sm">
                   <div className="text-red">{aiError}</div>
                   <div className="text-[11px] text-text-3 leading-relaxed mt-2">
-                    {"This is the hosting-region block described above, not a fault in the scan. Every provider PRISM tried is named in the error."}
+                    {"The AI runs through a proxy on this demo and can be slow. If it timed out, try Generate again. Every provider PRISM tried is named in the error."}
                   </div>
                 </div>
               )}

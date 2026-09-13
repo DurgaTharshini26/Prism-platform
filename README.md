@@ -9,14 +9,14 @@ Scan a domain, IP, email, phone or username and get WHOIS, DNS, threat intel, br
 **[Live Demo](https://getprism.su)** · **[Docker Quick Start](#docker-recommended)** · **[Architecture](docs/ARCHITECTURE.md)** · **[Security](SECURITY.md)** · **[Changelog](CHANGELOG.md)** · **[FAQ](#faq)**
 
 [![CI](https://github.com/NovaCode37/Prism-platform/actions/workflows/ci.yml/badge.svg)](https://github.com/NovaCode37/Prism-platform/actions/workflows/ci.yml)
-[![Version](https://img.shields.io/badge/version-2.8.1-7c5cfc?style=flat-square)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-2.9.2-7c5cfc?style=flat-square)](CHANGELOG.md)
 [![Live Demo](https://img.shields.io/badge/Live%20Demo-getprism.su-7c5cfc?style=flat-square&logo=firefox)](https://getprism.su)
 [![Firefox Add-on](https://img.shields.io/amo/v/prism-osint?style=flat-square&logo=firefoxbrowser&logoColor=white&label=Firefox%20Add-on&color=ff7139)](https://addons.mozilla.org/en-US/firefox/addon/prism-osint/)
 [![License](https://img.shields.io/badge/License-MIT-22c55e?style=flat-square)](LICENSE)
 
 </div>
 
-> **AI analysis does not work on the [live demo](https://getprism.su).** It runs on shared hosting whose region every hosted LLM provider refuses at their edge, so the request never reaches a model. That panel is the only thing affected. Every other module works, and on a self-hosted instance with your own provider the AI works normally. See [the FAQ](#faq) for why.
+> **AI analysis on the [live demo](https://getprism.su) can be slow.** The demo server sits in a region every hosted LLM provider blocks, so its AI calls are routed out through a proxy before they reach a model. It works, it is just slower than a normal instance, so give the summary a minute. A self-hosted instance with your own provider responds at full speed. See [the FAQ](#faq).
 
 
 <div align="center">
@@ -243,7 +243,7 @@ Nothing to clone and nothing to build:
 docker run -p 8080:8080 -e ALLOW_ANON_API=true ghcr.io/novacode37/prism-platform:latest
 ```
 
-Images are published for `linux/amd64` and `linux/arm64`, so this works on a Raspberry Pi or an ARM VPS as well. Tags follow releases: `latest`, `2.9`, `2.9.1`, plus `edge` built from `main`.
+Images are published for `linux/amd64` and `linux/arm64`, so this works on a Raspberry Pi or an ARM VPS as well. Tags follow releases: `latest`, `2.9`, `2.9.2`, plus `edge` built from `main`.
 
 If you need somewhere to put it, [Timeweb Cloud](https://timeweb.cloud/?i=146939) rents plain Linux servers by the month. That is a referral link: same price to you, and it pays for this project's domain.
 
@@ -784,12 +784,10 @@ Budget roughly 4 GB of RAM for a 3B model and 8 GB for a 7B one; answers are slo
 **Why do some modules fail on the public demo?**
 The demo is a shared-hosting instance with anonymous access and a daily scan quota, so it hits limits the average self-hosted install never will. Several modules also depend on third-party services that break on their own schedule. crt.sh regularly answers `502`, and the Wayback CDX API answers `503` under load. PRISM reports those upstream failures verbatim instead of hiding them.
 
-**Why is AI analysis dead on the demo?**
-Hosted LLM providers refuse the demo's hosting region at their edge, so the call is rejected before it reaches a model. It is an IP-level block, not a bug and not a missing key. PRISM tries every provider you configure and reports what each one said.
+**Why is AI analysis slow on the demo?**
+Hosted LLM providers block the demo's hosting region at their edge, so a direct call never reaches a model. The demo works around it by routing the AI calls out through a proxy in an allowed region. That extra hop costs time, so a summary can take up to a minute or two. It is not broken, just slow, and if a request times out, generating it again usually works. PRISM tries every provider you configure and reports what each one said.
 
-The demo sits on shared hosting, which rules out the two normal workarounds: there is no room to run a local model, and no second machine to proxy through. So it stays broken there, and only there.
-
-On your own instance it works. Point it at any OpenAI-compatible endpoint:
+On your own instance there is no proxy hop and it responds at full speed. Point it at any OpenAI-compatible endpoint:
 
 ```ini
 LLM_BASE_URL=https://your-provider/v1/chat/completions
