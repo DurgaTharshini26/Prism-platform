@@ -719,6 +719,7 @@ You are responsible for how you use the results. The author assumes no liability
 If PRISM is useful to you, a ⭐ is the best free way to help. If you'd like to support development financially:
 
 - **[DonationAlerts](https://dalink.to/novastro)**
+- **[DonatePay](https://donatepay.ru/don/1532982)** (card, RU wallets, and more)
 - **[SberTips](https://pay.mysbertips.ru/80561611)** (RUB)
 - **Crypto:**
 
