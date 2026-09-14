@@ -64,10 +64,6 @@ PRISM ships with these on:
 - **Non-root container.** The image runs as uid 1000. CI fails if that stops being true.
 - **`DISABLE_DOCS=true`** hides `/docs`, `/redoc` and `/openapi.json`.
 
-## Known limitations
-
-- Maigret runs as a subprocess, so `MODULE_PROXY` does not reach it. It uses the host's network directly. If the source address matters to you, route the whole container's egress rather than relying on the variable alone.
-
 ## Deployment
 
 For anything reachable from outside your machine:

@@ -8,6 +8,7 @@ from datetime import datetime
 import sys
 sys.path.append('..')
 from config import OUTPUT_DIR, Colors
+from modules import get_proxies
 
 
 class MaigretWrapper:
@@ -95,6 +96,17 @@ class MaigretWrapper:
             "--no-color"
         ]
 
+        # MODULE_PROXY reaches maigret two ways, because maigret makes two kinds
+        # of request. --proxy covers the site checks. Its database auto-update
+        # (db_updater.py) uses plain `requests` and never sees --proxy, so it
+        # also gets HTTP(S)_PROXY in the environment, which `requests` honours.
+        proxies = get_proxies()
+        env = None
+        if proxies:
+            proxy = proxies["https"]
+            cmd.extend(["--proxy", proxy])
+            env = {**os.environ, "HTTP_PROXY": proxy, "HTTPS_PROXY": proxy}
+
         if output_formats:
             for fmt in output_formats:
                 if fmt == "json":
@@ -127,7 +139,8 @@ class MaigretWrapper:
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
                 text=True,
-                bufsize=1
+                bufsize=1,
+                env=env,
             )
 
             timed_out = threading.Event()
