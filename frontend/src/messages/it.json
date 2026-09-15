@@ -110,7 +110,7 @@
       "line2Prefix": "Per l'accesso completo,",
       "selfHost": "ospita PRISM",
       "line2Suffix": "con le tue chiavi API.",
-      "line3": "I moduli che dipendono da servizi di terze parti (crt.sh, Wayback Machine) possono restituire errori 5xx quando tali servizi non sono raggiungibili o limitano le richieste. L'analisi AI potrebbe non essere disponibile in questa demo: OpenRouter e Groq bloccano le richieste provenienti dalla regione di hosting della demo sul loro edge Cloudflare. Con il self-hosting funziona tutto regolarmente."
+      "line3": "I moduli che dipendono da servizi di terze parti (crt.sh, Wayback Machine) possono restituire errori 5xx quando tali servizi non sono raggiungibili o limitano le richieste. L'analisi AI funziona in questa demo ma può essere lenta: OpenRouter e Groq bloccano la regione di hosting della demo, quindi le richieste passano da un proxy. Con il self-hosting funziona tutto regolarmente e l'AI risponde a piena velocità."
     }
   },
   "toolPanels": {

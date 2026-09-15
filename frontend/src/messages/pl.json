@@ -156,7 +156,7 @@
       "line2Prefix": "Aby uzyskać pełny dostęp,",
       "selfHost": "uruchom własną instancję PRISM",
       "line2Suffix": "z własnymi kluczami API.",
-      "line3": "Moduły zależne od usług zewnętrznych (crt.sh, Wayback Machine) mogą zwracać błędy 5xx, gdy te usługi są niedostępne lub ograniczają liczbę zapytań. Analiza AI może być niedostępna w tym demo: OpenRouter i Groq blokują żądania z regionu hostingu demo na swoim brzegu Cloudflare. Przy własnym hostingu wszystko działa normalnie."
+      "line3": "Moduły zależne od usług zewnętrznych (crt.sh, Wayback Machine) mogą zwracać błędy 5xx, gdy te usługi są niedostępne lub ograniczają liczbę zapytań. Analiza AI działa w tym demo, ale może być wolna: OpenRouter i Groq blokują region hostingu demo, więc żądania idą przez proxy. Przy własnym hostingu wszystko działa normalnie, a AI odpowiada z pełną szybkością."
     }
   },
   "toolPanels": {

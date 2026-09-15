@@ -104,7 +104,7 @@
       "line2Prefix": "Para acceso completo,",
       "selfHost": "autoaloje PRISM",
       "line2Suffix": "con sus propias claves de API.",
-      "line3": "Los módulos que dependen de servicios de terceros (crt.sh, Wayback Machine) pueden devolver errores 5xx cuando esos servicios fallan o limitan las peticiones. El análisis con IA puede no estar disponible en esta demo: OpenRouter y Groq bloquean las solicitudes desde la región de alojamiento de la demo en su edge de Cloudflare. Al autoalojar PRISM, todo funciona con normalidad."
+      "line3": "Los módulos que dependen de servicios de terceros (crt.sh, Wayback Machine) pueden devolver errores 5xx cuando esos servicios fallan o limitan las peticiones. El análisis con IA funciona en esta demo, pero puede ir lento: OpenRouter y Groq bloquean la región de alojamiento de la demo, así que las solicitudes salen a través de un proxy. Al autoalojar PRISM, todo funciona con normalidad y la IA responde a velocidad normal."
     }
   },
   "progress": { "modulesLabel": "módulos", "initializing": "Inicializando escaneo…", "running": "Ejecutando…", "log": "Registro de progreso" },

@@ -110,7 +110,7 @@
       "line2Prefix": "For full access,",
       "selfHost": "self-host PRISM",
       "line2Suffix": "with your own API keys.",
-      "line3": "Modules that depend on third-party services (crt.sh, Wayback Machine) can return 5xx errors when those services are down or rate-limiting. AI analysis may also be unavailable here: OpenRouter and Groq block requests from this demo's hosting region at their Cloudflare edge. Both work normally when you self-host."
+      "line3": "Modules that depend on third-party services (crt.sh, Wayback Machine) can return 5xx errors when those services are down or rate-limiting. AI analysis works here but can be slow: OpenRouter and Groq block this demo's hosting region, so the requests go out through a proxy. When you self-host, both work normally and the AI answers at full speed."
     }
   },
   "toolPanels": {

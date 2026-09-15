@@ -110,7 +110,7 @@
       "line2Prefix": "Tam erişim için,",
       "selfHost": "PRISM'i kendiniz barındırın",
       "line2Suffix": "ve kendi API anahtarlarınızı kullanın.",
-      "line3": "Üçüncü taraf hizmetlere bağlı modüller (crt.sh, Wayback Machine) bu hizmetler çöktüğünde veya hız sınırı uyguladığında 5xx hatası döndürebilir. Bu demodaki AI analizi de kullanılamayabilir: OpenRouter ve Groq, demo sunucusunun bölgesinden gelen istekleri Cloudflare kenarında engelliyor. Kendi kurulumunuzda her ikisi de normal çalışır."
+      "line3": "Üçüncü taraf hizmetlere bağlı modüller (crt.sh, Wayback Machine) bu hizmetler çöktüğünde veya hız sınırı uyguladığında 5xx hatası döndürebilir. Bu demodaki AI analizi çalışıyor ama yavaş olabilir: OpenRouter ve Groq demo sunucusunun bölgesini engellediği için istekler bir proxy üzerinden gidiyor. Kendi kurulumunuzda her ikisi de normal çalışır ve AI tam hızda yanıt verir."
     }
   },
   "toolPanels": {

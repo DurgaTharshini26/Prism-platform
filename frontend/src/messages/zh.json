@@ -110,7 +110,7 @@
       "line2Prefix": "如需完整访问，",
       "selfHost": "自建 PRISM",
       "line2Suffix": "并使用你自己的 API 密钥。",
-      "line3": "依赖第三方服务的模块（crt.sh、Wayback Machine）在这些服务不可用或限流时可能返回 5xx 错误。本演示中的 AI 分析也可能无法使用：OpenRouter 和 Groq 在其 Cloudflare 边缘节点拦截了来自演示服务器所在区域的请求。自行部署时，两者均可正常工作。"
+      "line3": "依赖第三方服务的模块（crt.sh、Wayback Machine）在这些服务不可用或限流时可能返回 5xx 错误。本演示中的 AI 分析可以使用，但响应可能较慢：OpenRouter 和 Groq 屏蔽了演示服务器所在的区域，因此请求需经代理转发。自行部署时，两者均可正常工作，AI 也会以正常速度响应。"
     }
   },
   "toolPanels": {
