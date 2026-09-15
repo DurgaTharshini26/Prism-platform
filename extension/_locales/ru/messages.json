@@ -3,7 +3,7 @@
     "message": "PRISM OSINT"
   },
   "extDescription": {
-    "message": "Кликните правой кнопкой по домену, IP, email, телефону или юзернейму, чтобы просканировать его в вашем PRISM."
+    "message": "Нажмите правой кнопкой мыши на домен, IP, email, телефон или имя пользователя, чтобы просканировать его в вашем PRISM."
   },
   "contextMenuTitle": {
     "message": "Сканировать «%s» в PRISM"
@@ -12,7 +12,7 @@
     "message": "Цель"
   },
   "targetPlaceholder": {
-    "message": "домен, IP, email, телефон, юзернейм"
+    "message": "домен, IP, email, телефон, имя пользователя"
   },
   "scanButton": {
     "message": "Сканировать"
@@ -30,7 +30,7 @@
     "message": "Сервер"
   },
   "serverNote": {
-    "message": "Адрес вашего PRISM, не цель. Демо: getprism.su"
+    "message": "Адрес вашего сервера PRISM, а не цели. Демо: getprism.su"
   },
   "saveButton": {
     "message": "Сохранить"
@@ -51,13 +51,13 @@
     "message": "Готово"
   },
   "failed": {
-    "message": "Скан не удался"
+    "message": "Сканирование не удалось"
   },
   "opsecScore": {
     "message": "OPSEC-оценка"
   },
   "findings": {
-    "message": "Находки"
+    "message": "Замечания"
   },
   "noFindings": {
     "message": "Ничего значимого не найдено"
@@ -66,7 +66,7 @@
     "message": "Открыть полный отчёт"
   },
   "copy": {
-    "message": "Копировать"
+    "message": "Скопировать"
   },
   "copied": {
     "message": "Скопировано ✓"
