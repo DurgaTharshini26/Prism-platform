@@ -6,7 +6,7 @@ PRISM can send module and LLM traffic through an HTTP or SOCKS proxy so OSINT lo
 
 Set `MODULE_PROXY` to a proxy URL. Modules that call `get_proxies()` in `modules/__init__.py` pass that URL to `requests` for both `http` and `https` schemes.
 
-**Covers:** outbound HTTP(S) from modules that use the shared helper (HudsonRock, Lunar, and the other module clients wired through `get_with_retry` / `get_proxies`).
+**Covers:** every module that makes an outbound HTTP(S) call, since they all go through `get_proxies()`.
 
 **Also covers Maigret:** the wrapper passes `MODULE_PROXY` as `maigret --proxy` and sets `HTTP_PROXY` / `HTTPS_PROXY` so Maigret’s database updater (plain `requests`) uses the same egress.
 
@@ -22,10 +22,10 @@ Set `MODULE_PROXY` to a proxy URL. Modules that call `get_proxies()` in `modules
 | HTTP | `http://host:8080` | Plain HTTP CONNECT / absolute-form proxying |
 | HTTP + auth | `http://user:pass@host:8080` | Basic auth in the URL |
 | HTTPS proxy | `https://host:8443` | Supported by `requests` when the proxy speaks TLS |
-| SOCKS5 | `socks5://host:1080` | Needs PySocks (shipped via `requests[socks]` in `requirements.txt`) |
+| SOCKS5 | `socks5://host:1080` | Needs PySocks, pulled in by `requests[socks]` |
 | SOCKS5 + auth | `socks5://user:pass@host:1080` | Same as above |
 
-The Docker image installs `requirements.txt`, which pins `requests[socks]`, so SOCKS works in the published image without an extra package install. Unit tests in `tests/test_socks_proxy.py` assert both `http://` and `socks5://` `MODULE_PROXY` values route through a stub proxy.
+Both `requirements.txt` and `requirements-web.txt` ask for `requests[socks]`, and the image installs the latter, so SOCKS works in the published image with nothing extra to install. Unit tests in `tests/test_socks_proxy.py` assert both `http://` and `socks5://` `MODULE_PROXY` values route through a stub proxy.
 
 ### Docker example
 
