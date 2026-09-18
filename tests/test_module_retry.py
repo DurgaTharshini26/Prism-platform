@@ -48,19 +48,34 @@ def no_backoff(monkeypatch):
     monkeypatch.setattr(modules_pkg, "RETRY_BACKOFF_SECONDS", 0)
 
 
-def stub(monkeypatch, *outcomes):
-    """Answer each request with the next outcome: a FakeResponse or an exception."""
+def stub(monkeypatch, *outcomes, fallback=None):
+    """Answer each request with the next outcome: a FakeResponse or an exception.
+
+    `fallback` answers the certspotter request the CT module makes when crt.sh
+    has failed (#379). It is not part of the outcome sequence, so a test about
+    retries stays about retries: use `crt_sh_calls(calls)` to count the attempts
+    against crt.sh itself.
+    """
     calls = []
 
     def fake_get(url, **kwargs):
         calls.append({"url": url, "kwargs": kwargs})
-        outcome = outcomes[len(calls) - 1]
+        if fallback is not None and "certspotter" in url:
+            if isinstance(fallback, Exception):
+                raise fallback
+            return fallback
+        outcome = outcomes[len(crt_sh_calls(calls)) - 1]
         if isinstance(outcome, Exception):
             raise outcome
         return outcome
 
     monkeypatch.setattr(requests, "get", fake_get)
     return calls
+
+
+def crt_sh_calls(calls) -> list:
+    """The calls that went to the retried source, without the CT fallback."""
+    return [call for call in calls if "certspotter" not in call["url"]]
 
 
 def test_crt_sh_503_is_retried_and_the_result_is_parsed(monkeypatch):
@@ -75,20 +90,24 @@ def test_crt_sh_503_is_retried_and_the_result_is_parsed(monkeypatch):
 
 
 def test_a_source_that_stays_down_still_reports_the_failure(monkeypatch):
-    calls = stub(monkeypatch, *[FakeResponse(503)] * modules_pkg.RETRY_ATTEMPTS)
+    calls = stub(
+        monkeypatch,
+        *[FakeResponse(503)] * modules_pkg.RETRY_ATTEMPTS,
+        fallback=FakeResponse(503),
+    )
 
     result = CertTransparency().search("example.com")
 
-    assert len(calls) == modules_pkg.RETRY_ATTEMPTS
+    assert len(crt_sh_calls(calls)) == modules_pkg.RETRY_ATTEMPTS
     assert "503" in result["error"]
 
 
 def test_an_answer_is_not_retried(monkeypatch):
-    calls = stub(monkeypatch, FakeResponse(404))
+    calls = stub(monkeypatch, FakeResponse(404), fallback=FakeResponse(404))
 
     result = CertTransparency().search("example.com")
 
-    assert len(calls) == 1
+    assert len(crt_sh_calls(calls)) == 1
     assert "404" in result["error"]
 
 
@@ -103,11 +122,15 @@ def test_a_timeout_is_retried(monkeypatch):
 
 
 def test_timeouts_that_outlive_the_retries_keep_the_timeout_error(monkeypatch):
-    calls = stub(monkeypatch, *[requests.Timeout("read timed out")] * modules_pkg.RETRY_ATTEMPTS)
+    calls = stub(
+        monkeypatch,
+        *[requests.Timeout("read timed out")] * modules_pkg.RETRY_ATTEMPTS,
+        fallback=requests.Timeout("read timed out"),
+    )
 
     result = CertTransparency().search("example.com")
 
-    assert len(calls) == modules_pkg.RETRY_ATTEMPTS
+    assert len(crt_sh_calls(calls)) == modules_pkg.RETRY_ATTEMPTS
     assert "timed out" in result["error"]
 
 
