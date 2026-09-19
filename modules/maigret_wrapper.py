@@ -2,11 +2,14 @@ import subprocess
 import os
 import re
 import json
+import threading
 from typing import Dict, List, Any, Optional
 from datetime import datetime
 import sys
 sys.path.append('..')
 from config import OUTPUT_DIR, Colors
+from modules import get_proxies
+from modules.module_status import annotate, SKIPPED
 
 
 class MaigretWrapper:
@@ -38,36 +41,21 @@ class MaigretWrapper:
                 continue
         return None
 
-    def install_maigret(self) -> bool:
-        print(f"{Colors.YELLOW}Installing maigret into isolated venv...{Colors.RESET}")
-        try:
-            project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-            venv_path = os.path.join(project_root, "venv-maigret")
-            if not os.path.isdir(venv_path):
-                subprocess.run([sys.executable, "-m", "venv", venv_path], check=True, timeout=30)
-            pip_bin = os.path.join(venv_path, "Scripts", "pip.exe") if sys.platform == "win32"\
-                else os.path.join(venv_path, "bin", "pip")
-            result = subprocess.run(
-                [pip_bin, "install", "maigret"],
-                capture_output=True, text=True, timeout=120,
-            )
-            if result.returncode == 0:
-                self.maigret_bin = self._find_maigret()
-                self.maigret_installed = self.maigret_bin is not None
-                print(f"{Colors.GREEN}Maigret installed successfully{Colors.RESET}")
-                return True
-            else:
-                print(f"{Colors.RED}Failed to install maigret: {result.stderr}{Colors.RESET}")
-                return False
-        except Exception as e:
-            print(f"{Colors.RED}Error installing maigret: {e}{Colors.RESET}")
-            return False
-
     def search(self, username: str, output_formats: List[str] = None,
-               timeout: int = 30, top_sites: int = 500) -> Dict[str, Any]:
+               timeout: int = 30, top_sites: int = 500,
+               max_runtime: Optional[int] = None) -> Dict[str, Any]:
         if not self.maigret_installed:
-            if not self.install_maigret():
-                return {"error": "Maigret not installed and installation failed"}
+            return annotate({
+                "username": username,
+                "timestamp": datetime.now().isoformat(),
+                "accounts": [],
+                "output_files": [],
+                "error": None,
+            }, SKIPPED, "maigret is not installed; install it with `pip install maigret` "
+                        "or set MAIGRET_BIN to a binary")
+
+        if max_runtime is None:
+            max_runtime = int(os.getenv("MAIGRET_MAX_RUNTIME") or "600")
 
         result = {
             "username": username,
@@ -89,6 +77,17 @@ class MaigretWrapper:
             "--retries", "1",
             "--no-color"
         ]
+
+        # MODULE_PROXY reaches maigret two ways, because maigret makes two kinds
+        # of request. --proxy covers the site checks. Its database auto-update
+        # (db_updater.py) uses plain `requests` and never sees --proxy, so it
+        # also gets HTTP(S)_PROXY in the environment, which `requests` honours.
+        proxies = get_proxies()
+        env = None
+        if proxies:
+            proxy = proxies["https"]
+            cmd.extend(["--proxy", proxy])
+            env = {**os.environ, "HTTP_PROXY": proxy, "HTTPS_PROXY": proxy}
 
         if output_formats:
             for fmt in output_formats:
@@ -122,24 +121,43 @@ class MaigretWrapper:
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
                 text=True,
-                bufsize=1
+                bufsize=1,
+                env=env,
             )
 
-            found_count = 0
-            for line in iter(process.stdout.readline, ''):
-                line = line.strip()
-                if line:
-                    if "[+]" in line or "found:" in line.lower():
-                        found_count += 1
-                        print(f"  {Colors.GREEN}{line}{Colors.RESET}")
-                    elif "[-]" in line or "not found" in line.lower():
-                        pass
-                    elif "[!]" in line or "error" in line.lower():
-                        print(f"  {Colors.YELLOW}{line}{Colors.RESET}")
-                    else:
-                        print(f"  {line}")
+            timed_out = threading.Event()
 
-            process.wait()
+            def _stop():
+                timed_out.set()
+                process.kill()
+
+            watchdog = threading.Timer(max_runtime, _stop)
+            watchdog.start()
+            try:
+                found_count = 0
+                for line in iter(process.stdout.readline, ''):
+                    line = line.strip()
+                    if line:
+                        if "[+]" in line or "found:" in line.lower():
+                            found_count += 1
+                            print(f"  {Colors.GREEN}{line}{Colors.RESET}")
+                        elif "[-]" in line or "not found" in line.lower():
+                            pass
+                        elif "[!]" in line or "error" in line.lower():
+                            print(f"  {Colors.YELLOW}{line}{Colors.RESET}")
+                        else:
+                            print(f"  {line}")
+
+                process.wait()
+            finally:
+                watchdog.cancel()
+                if process.poll() is None:
+                    process.kill()
+                    process.wait()
+
+            if timed_out.is_set():
+                result["error"] = f"Search exceeded {max_runtime}s and was stopped"
+                return result
 
             json_file = f"{output_path}.json"
             if os.path.exists(json_file):
@@ -156,8 +174,6 @@ class MaigretWrapper:
 
             result["total_found"] = len(result["accounts"])
 
-        except subprocess.TimeoutExpired:
-            result["error"] = "Search timed out"
         except Exception as e:
             result["error"] = str(e)
 

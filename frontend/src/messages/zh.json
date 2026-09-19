@@ -1,4 +1,16 @@
 {
+  "shortcuts": {
+    "title": "键盘快捷键",
+    "close": "关闭",
+    "groupNavigation": "导航",
+    "groupAppearance": "外观",
+    "groupResults": "结果",
+    "focusSearch": "跳转到搜索框",
+    "showShortcuts": "显示此面板",
+    "toggleTheme": "切换浅色或深色主题",
+    "prevTab": "上一个结果标签页",
+    "nextTab": "下一个结果标签页"
+  },
   "topbar": {
     "tagline": "开源情报",
     "scanning": "扫描中",
@@ -30,6 +42,7 @@
       "username": "用户名"
     },
     "modules": {
+      "rdap": "RDAP",
       "whois": "WHOIS",
       "dns": "DNS",
       "geoip": "GeoIP",
@@ -45,6 +58,8 @@
       "smtp": "SMTP 验证",
       "leaks": "泄露检查",
       "gravatar": "Gravatar",
+      "hudsonrock": "信息窃取程序暴露",
+      "lunar": "域名暴露",
       "hlr": "电话查询",
       "blackbird": "Blackbird",
       "maigret": "Maigret",
@@ -95,7 +110,7 @@
       "line2Prefix": "如需完整访问，",
       "selfHost": "自建 PRISM",
       "line2Suffix": "并使用你自己的 API 密钥。",
-      "line3": "依赖第三方服务的模块（crt.sh、Wayback Machine）在这些服务不可用或限流时可能返回 5xx 错误。本演示中的 AI 分析也可能无法使用：OpenRouter 和 Groq 在其 Cloudflare 边缘节点拦截了来自演示服务器所在区域的请求。自行部署时，两者均可正常工作。"
+      "line3": "依赖第三方服务的模块（crt.sh、Wayback Machine）在这些服务不可用或限流时可能返回 5xx 错误。本演示中的 AI 分析可以使用，但响应可能较慢：OpenRouter 和 Groq 屏蔽了演示服务器所在的区域，因此请求需经代理转发。自行部署时，两者均可正常工作，AI 也会以正常速度响应。"
     }
   },
   "toolPanels": {
@@ -221,6 +236,11 @@
     "copyCurl": "复制为 cURL",
     "scanAnother": "扫描其他目标",
     "tabs": {
+      "rdap": "RDAP",
+      "github": "GitHub",
+      "gravatar": "Gravatar",
+      "hudsonrock": "信息窃取程序暴露",
+      "lunar": "域名暴露",
       "findings": "发现",
       "whois": "WHOIS",
       "dns": "DNS",
@@ -270,6 +290,7 @@
     "json": { "title": "原始 JSON 结果", "show": "显示原始数据", "hide": "隐藏原始数据" },
     "ai": { "title": "AI OSINT 分析 · Nvidia Nemotron", "chatTitle": "向 AI 提问", "generate": "生成 AI 摘要", "generating": "正在生成分析…", "model": "模型", "regenerate": "重新生成", "placeholder": "询问关于此扫描的任何问题…" },
     "duration": "耗时 {duration} 完成",
+    "copyAllFindings": "复制所有发现",
     "copyAllEmails": "复制所有邮箱",
     "emailsCopied": "邮箱已复制！",
     "filterPlatforms": "筛选平台..."
@@ -320,6 +341,10 @@
     "de": "DE",
     "fr": "FR",
     "es": "ES",
-    "pl": "PL"
+    "it": "IT",
+    "pt": "PT",
+    "pl": "PL",
+    "zh": "ZH",
+    "tr": "TR"
   }
 }

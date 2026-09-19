@@ -17,6 +17,8 @@ CENSYS_API_SECRET = os.getenv("CENSYS_API_SECRET", "")
 
 OUTPUT_DIR = os.path.join(os.path.dirname(__file__), "results")
 os.makedirs(OUTPUT_DIR, exist_ok=True)
+PRISM_VERSION = "2.9.2"
+USER_AGENT = f"PRISM-OSINT/{PRISM_VERSION} (+https://github.com/NovaCode37/Prism-platform)"
 
 class Colors:
     RED = "\033[91m"

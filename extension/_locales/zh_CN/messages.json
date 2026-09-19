@@ -17,6 +17,15 @@
   "scanButton": {
     "message": "扫描"
   },
+  "scanPageButton": {
+    "message": "扫描此页面"
+  },
+  "scanPageUnsupported": {
+    "message": "无法扫描此页面。"
+  },
+  "scanPageHostname": {
+    "message": "无法确定页面主机名。"
+  },
   "serverLabel": {
     "message": "服务器"
   },
@@ -28,6 +37,9 @@
   },
   "savedOk": {
     "message": "已保存"
+  },
+  "clearRecent": {
+    "message": "清除最近目标"
   },
   "apiKeyLabel": {
     "message": "API 密钥（可选）"
@@ -52,5 +64,11 @@
   },
   "openFull": {
     "message": "打开完整报告"
+  },
+  "copy": {
+    "message": "复制"
+  },
+  "copied": {
+    "message": "已复制 ✓"
   }
 }

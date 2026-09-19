@@ -17,6 +17,15 @@
   "scanButton": {
     "message": "Verificar"
   },
+  "scanPageButton": {
+    "message": "Verificar esta página"
+  },
+  "scanPageUnsupported": {
+    "message": "Esta página não pode ser verificada."
+  },
+  "scanPageHostname": {
+    "message": "Não foi possível determinar o nome do host da página."
+  },
   "serverLabel": {
     "message": "Servidor"
   },
@@ -28,6 +37,9 @@
   },
   "savedOk": {
     "message": "Salvo"
+  },
+  "clearRecent": {
+    "message": "Limpar alvos recentes"
   },
   "apiKeyLabel": {
     "message": "Chave de API (opcional)"
@@ -52,5 +64,11 @@
   },
   "openFull": {
     "message": "Abrir relatório completo"
+  },
+  "copy": {
+    "message": "Copiar"
+  },
+  "copied": {
+    "message": "Copiado ✓"
   }
 }

@@ -4,7 +4,7 @@ ARG UV_IMAGE=ghcr.io/astral-sh/uv:alpine
 
 FROM --platform=$BUILDPLATFORM ${UV_IMAGE} AS uv-bin
 
-FROM ${NODE_IMAGE} AS frontend-build
+FROM --platform=$BUILDPLATFORM ${NODE_IMAGE} AS frontend-build
 
 WORKDIR /build/frontend
 
@@ -83,12 +83,18 @@ RUN apk add --no-cache curl \
     /usr/local/lib/python*/ensurepip \
     /usr/local/lib/python*/site-packages/pip*
 
+RUN addgroup -g 1000 -S prism \
+    && adduser -u 1000 -S prism -G prism
+
 COPY --from=python-build /opt/venv /opt/venv
 
 COPY . .
 COPY --from=frontend-build /build/frontend/out /app/frontend/out
 
-RUN mkdir -p results scan_data module_cache
+RUN mkdir -p results scan_data module_cache watchlist_data \
+    && chown -R prism:prism /app
+
+USER prism
 
 EXPOSE 8080
 

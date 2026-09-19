@@ -108,6 +108,10 @@ export interface ShodanData extends ModuleStatusFields {
   open_ports?: number[];
   vulns?: string[];
   services?: { port: number; transport: string; product?: string; version?: string }[];
+  hostnames?: string[];
+  tags?: string[];
+  cpes?: string[];
+  source?: 'shodan' | 'internetdb';
   error?: string;
 }
 
@@ -183,6 +187,48 @@ export interface GravatarAccount {
   url?: string;
 }
 
+export interface HudsonRockData extends ModuleStatusFields {
+  target?: string;
+  target_type?: 'domain' | 'email' | 'username';
+  total_compromised?: number | null;
+  employees?: number | null;
+  users?: number | null;
+  third_parties?: number | null;
+  employee_urls?: { url: string; occurrence?: number }[];
+  stealer_families?: Record<string, number>;
+  employee_password_stats?: Record<string, number | null>;
+  user_password_stats?: Record<string, number | null>;
+  stealers_found?: number | null;
+  compromised?: boolean;
+  corporate_services?: number | null;
+  user_services?: number | null;
+  error?: string;
+}
+
+export interface LunarData extends ModuleStatusFields {
+  target?: string;
+  target_type?: 'domain';
+  report_status?: string | null;
+  period?: { from?: string; to?: string } | null;
+  total_events?: number | null;
+  infostealer_events?: number | null;
+  data_breach_events?: number | null;
+  employee_events?: number | null;
+  client_events?: number | null;
+  first_seen?: string | null;
+  last_seen?: string | null;
+  malware_families?: { family: string; events?: number | null }[];
+  services?: { service: string; events?: number | null }[];
+  countries?: { country: string; events?: number | null }[];
+  monthly_timeline?: {
+    month: string;
+    total_events?: number | null;
+    infostealer_events?: number | null;
+    data_breach_events?: number | null;
+  }[];
+  error?: string;
+}
+
 export interface GravatarData extends ModuleStatusFields {
   avatar_url?: string;
   display_name?: string;
@@ -190,12 +236,51 @@ export interface GravatarData extends ModuleStatusFields {
   error?: string;
 }
 
+export interface RDAPData extends ModuleStatusFields {
+  domain?: string;
+  rdap_url?: string;
+  registered?: boolean | null;
+  created?: string | null;
+  expires?: string | null;
+  updated?: string | null;
+  registrar?: string | null;
+  registrant?: {
+    name?: string | null;
+    email?: string | null;
+    phone?: string | null;
+    organization?: string | null;
+    country?: string | null;
+  } | null;
+  administrative?: {
+    name?: string | null;
+    email?: string | null;
+    phone?: string | null;
+    organization?: string | null;
+    country?: string | null;
+  } | null;
+  technical?: {
+    name?: string | null;
+    email?: string | null;
+    phone?: string | null;
+    organization?: string | null;
+    country?: string | null;
+  } | null;
+  nameservers?: string[];
+  raw?: unknown;
+  error?: string | null;
+}
+
+export interface BlackbirdFailure extends ModuleStatusFields {
+  error?: string;
+}
+
 export interface ScanResults {
   whois?: WhoisData;
+  rdap?: RDAPData;
   dns?: DnsRecord;
   geoip?: GeoipData;
   cert_transparency?: CertTransparencyData;
-  blackbird?: BlackbirdResult[];
+  blackbird?: BlackbirdResult[] | BlackbirdFailure;
   virustotal?: VirusTotalData;
   abuseipdb?: AbuseIPDBData;
   shodan?: ShodanData;
@@ -207,6 +292,8 @@ export interface ScanResults {
   smtp?: SmtpData;
   breaches?: BreachData;
   gravatar?: GravatarData;
+  hudsonrock?: HudsonRockData;
+  lunar?: LunarData;
   website?: Record<string, unknown>;
   dorks?: string[];
   censys?: CensysData;

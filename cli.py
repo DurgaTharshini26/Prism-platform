@@ -13,12 +13,18 @@ if _PROJECT_ROOT not in sys.path:
     sys.path.insert(0, _PROJECT_ROOT)
 
 import config
+from config import PRISM_VERSION
 
-__version__ = "2.6.0"
+__version__ = PRISM_VERSION
 
 
 def normalize_target(target: str) -> str:
     normalized = target.strip()
+    if normalized.lower().startswith("mailto:"):
+        normalized = normalized[7:].strip()
+        q_pos = normalized.find("?")
+        if q_pos != -1:
+            normalized = normalized[:q_pos].strip()
     scheme_sep = normalized.find("://")
     if scheme_sep != -1 and normalized[:scheme_sep].lower() in {"http", "https"}:
         normalized = normalized[scheme_sep + 3:]
@@ -32,7 +38,7 @@ def normalize_target(target: str) -> str:
 
 
 def detect_type(target: str) -> str:
-    if "@" in target:
+    if "@" in target and not target.startswith("@"):
         return "email"
     stripped = target.replace("+", "").replace("-", "").replace(" ", "")
     if stripped.isdigit():
@@ -70,6 +76,11 @@ async def run_scan(
             _log("Running whois ...")
             from modules.extra_tools import WhoisLookup
             results["whois"] = await _invoke(WhoisLookup().lookup, target)
+
+        if want("rdap") and scan_type == "domain":
+            _log("Running rdap ...")
+            from modules.rdap import RDAPLookup
+            results["rdap"] = await _invoke(RDAPLookup().lookup, target)
 
         if want("dns") and scan_type == "domain":
             _log("Running dns ...")
@@ -146,6 +157,16 @@ async def run_scan(
             else:
                 results["censys"] = await _invoke(cl.search_ip, target)
 
+        if want("hudsonrock") and scan_type == "domain":
+            _log("Running hudsonrock ...")
+            from modules.hudsonrock import HudsonRockLookup
+            results["hudsonrock"] = await _invoke(HudsonRockLookup().search_domain, target)
+
+        if want("lunar") and scan_type == "domain":
+            _log("Running lunar ...")
+            from modules.lunar import LunarLookup
+            results["lunar"] = await _invoke(LunarLookup().search_domain, target)
+
     elif scan_type == "email":
         if want("smtp"):
             _log("Running smtp ...")
@@ -161,6 +182,11 @@ async def run_scan(
             _log("Running emailrep ...")
             from modules.hunter import EmailRepLookup
             results["emailrep"] = await _invoke(EmailRepLookup().lookup, target)
+
+        if want("hudsonrock"):
+            _log("Running hudsonrock ...")
+            from modules.hudsonrock import HudsonRockLookup
+            results["hudsonrock"] = await _invoke(HudsonRockLookup().search_email, target)
 
     elif scan_type == "phone":
         if want("hlr"):
@@ -199,16 +225,24 @@ async def run_scan(
             _log("Running blackbird ...")
             from modules.blackbird import Blackbird
             bb = Blackbird(timeout=10, max_concurrent=25)
-            await _invoke(bb.search, target)
-            results["blackbird"] = [
-                {"site": r.site, "url": r.url, "status": r.status, "response_time": r.response_time}
-                for r in bb.results
-            ]
+            outcome = await _invoke(bb.search, target)
+            if isinstance(outcome, dict) and outcome.get("error"):
+                results["blackbird"] = outcome
+            else:
+                results["blackbird"] = [
+                    {"site": r.site, "url": r.url, "status": r.status, "response_time": r.response_time}
+                    for r in bb.results
+                ]
 
         if want("maigret"):
             _log("Running maigret ...")
             from modules.maigret_wrapper import MaigretWrapper
             results["maigret"] = await _invoke(MaigretWrapper().search, target)
+
+        if want("hudsonrock"):
+            _log("Running hudsonrock ...")
+            from modules.hudsonrock import HudsonRockLookup
+            results["hudsonrock"] = await _invoke(HudsonRockLookup().search_username, target)
 
     _log("Computing opsec score ...")
     from modules.opsec_score import score_from_results
@@ -296,7 +330,97 @@ def build_parser() -> argparse.ArgumentParser:
     scan_p.add_argument("--verbose", "-v", action="store_true", default=False, help="Print progress to stderr")
     scan_p.add_argument("--quiet", "-q", action="store_true", default=False, help="Print only the result (suppress banners and progress)")
 
+    watch_p = sub.add_parser("watchlist", help="Manage scheduled re-scans")
+    watch_p.set_defaults(watch_parser=watch_p)
+    watch_sub = watch_p.add_subparsers(dest="watch_command")
+
+    watch_list = watch_sub.add_parser("list", help="List watchlist entries")
+    watch_list.add_argument("--json", dest="fmt_json", action="store_true", default=False, help="Output JSON")
+
+    watch_add = watch_sub.add_parser("add", help="Add a target to the watchlist")
+    watch_add.add_argument("target", help="Target to re-scan on a schedule")
+    watch_add.add_argument(
+        "--type", "-t",
+        dest="scan_type",
+        choices=["domain", "ip", "email", "phone", "username", "telegram"],
+        default=None,
+        help="Target type (auto-detected if omitted)",
+    )
+    watch_add.add_argument("--modules", "-m", default=None, help="Comma-separated list of modules (default: all applicable)")
+    watch_add.add_argument("--interval", type=float, default=24.0, help="Hours between runs (default: 24)")
+    watch_add.add_argument("--webhook", default=None, help="Webhook URL to notify on changes")
+
+    watch_rm = watch_sub.add_parser("rm", help="Remove a watchlist entry")
+    watch_rm.add_argument("id", help="Watchlist entry id")
+
+    watch_pause = watch_sub.add_parser("pause", help="Pause a watchlist entry")
+    watch_pause.add_argument("id", help="Watchlist entry id")
+
+    watch_resume = watch_sub.add_parser("resume", help="Resume a paused watchlist entry")
+    watch_resume.add_argument("id", help="Watchlist entry id")
+
     return parser
+
+
+def _fmt_ts(ts: Optional[float]) -> str:
+    if not ts:
+        return "-"
+    return datetime.fromtimestamp(ts).strftime("%Y-%m-%d %H:%M")
+
+
+def run_watchlist(args: argparse.Namespace, parser: argparse.ArgumentParser) -> int:
+    from web import watchlist as wl
+
+    command = getattr(args, "watch_command", None)
+    if command is None:
+        args.watch_parser.print_help()
+        return 1
+
+    if command == "list":
+        entries = wl.list_watchlists(wl.ANONYMOUS)
+        if getattr(args, "fmt_json", False):
+            print(json.dumps(entries, indent=2, default=str))
+            return 0
+        if not entries:
+            print("No watchlist entries. Add one with: prism watchlist add <target>")
+            return 0
+        print(f"{'ID':<38} {'TARGET':<28} {'TYPE':<9} {'EVERY':<7} {'STATUS':<10} NEXT RUN")
+        for e in entries:
+            status = "paused" if e.get("paused") else (e.get("last_status") or "pending")
+            interval = f"{e.get('interval_hours', 0):g}h"
+            print(
+                f"{e['id']:<38} {e['target'][:27]:<28} {e['scan_type']:<9} "
+                f"{interval:<7} {status:<10} {_fmt_ts(e.get('next_run'))}"
+            )
+        return 0
+
+    if command == "add":
+        target = normalize_target(args.target)
+        scan_type = args.scan_type or detect_type(target)
+        modules = [m.strip() for m in args.modules.split(",") if m.strip()] if args.modules else None
+        interval = max(1.0, min(float(args.interval), 24 * 30))
+        entry = wl.create_watchlist(wl.ANONYMOUS, target, scan_type, modules, interval, args.webhook)
+        print(f"Watching {entry['target']} ({entry['scan_type']}) every {interval:g}h")
+        print(f"id: {entry['id']}")
+        return 0
+
+    if command == "rm":
+        if wl.delete_watchlist(args.id, wl.ANONYMOUS):
+            print(f"Removed {args.id}")
+            return 0
+        print(f"No watchlist entry with id {args.id}", file=sys.stderr)
+        return 1
+
+    if command in ("pause", "resume"):
+        entry = wl.set_paused(args.id, wl.ANONYMOUS, command == "pause")
+        if entry is None:
+            print(f"No watchlist entry with id {args.id}", file=sys.stderr)
+            return 1
+        print(f"{'Paused' if entry['paused'] else 'Resumed'} {entry['target']}")
+        return 0
+
+    args.watch_parser.print_help()
+    return 1
 
 
 def main(argv: Optional[List[str]] = None) -> None:
@@ -306,6 +430,9 @@ def main(argv: Optional[List[str]] = None) -> None:
     if args.command is None:
         parser.print_help()
         sys.exit(1)
+
+    if args.command == "watchlist":
+        sys.exit(run_watchlist(args, parser))
 
     if args.command == "scan":
         target = normalize_target(args.target)

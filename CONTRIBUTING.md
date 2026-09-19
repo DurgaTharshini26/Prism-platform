@@ -4,7 +4,7 @@ Thanks for your interest in contributing! This document explains how to get star
 
 ## Getting Started
 
-1. **Fork** the repository
+1. **Fork** the repository (use the "Fork" button on GitHub)
 2. **Clone** your fork:
    ```bash
    git clone https://github.com/<your-nick>/Prism-platform.git
@@ -14,6 +14,13 @@ Thanks for your interest in contributing! This document explains how to get star
    ```bash
    git checkout -b feature/my-feature
    ```
+4. **Push** to your fork:
+   ```bash
+   git push origin feature/my-feature
+   ```
+5. **Open the PR** from your fork's branch to the `main` branch of this repository.
+
+> Note: pushing directly to this repository is refused for everyone without write access. A first-time PR needs a maintainer to approve the CI run before anything happens, so it may sit for a few minutes.
 
 ## Development Setup
 
@@ -37,15 +44,15 @@ npm install
 npm run dev
 ```
 
-Open http://localhost:3000 — it proxies API requests to `localhost:8080`.
+Open http://localhost:3000. It proxies API requests to `localhost:8080`.
 
 ## Project Structure
 
-- `modules/` — OSINT scan modules (each module is a standalone class)
-- `web/app.py` — FastAPI backend with WebSocket scan engine
-- `web/security.py` — Auth, rate limiting, input validation
-- `frontend/src/` — Next.js 14 + TypeScript + Tailwind CSS
-- `tests/` — pytest test suite
+- `modules/`: OSINT scan modules (each module is a standalone class)
+- `web/app.py`: FastAPI backend with WebSocket scan engine
+- `web/security.py`: Auth, rate limiting, input validation
+- `frontend/src/`: Next.js 14 + TypeScript + Tailwind CSS
+- `tests/`: pytest test suite
 
 ## Adding a New Module
 
@@ -73,11 +80,11 @@ class YourModule:
 
 ## Code Style
 
-- **Python** — PEP 8, type hints with `typing` module (`Dict`, `List`, etc. for Python 3.8+ compat)
-- **TypeScript** — standard Next.js/React conventions
+- **Python**: PEP 8, type hints with `typing` module (`Dict`, `List`, etc. for Python 3.8+ compat)
+- **TypeScript**: standard Next.js/React conventions
 - No trailing whitespace on blank lines
 - Two blank lines between top-level definitions, one blank line between methods
-- No unnecessary comments — code should be self-explanatory
+- No unnecessary comments. Code should be self-explanatory
 
 ## Running Tests
 
@@ -87,12 +94,17 @@ pytest tests/ -v --cov=modules --cov-report=term-missing
 
 All new modules should include tests. Use `monkeypatch` to mock external API calls.
 
+## Scope
+
+A PR should do what its issue asks. If you find a bug along the way, open it as its own issue or its own PR, or flag it in the PR description. Don't fold a fix for it into the same PR. This keeps review focused and avoids one PR changing two things at once.
+
 ## Pull Request Process
 
 1. Make sure tests pass: `pytest tests/ -v`
-2. Keep commits focused — one feature or fix per PR
+2. Keep commits focused: one feature or fix per PR
 3. Write a clear PR description explaining **what** and **why**
-4. Link related issues if applicable
+4. Put `Closes #<issue-number>` in the PR description so the issue closes automatically on merge.
+5. Link related issues if applicable
 
 ## Reporting Issues
 

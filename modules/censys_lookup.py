@@ -1,4 +1,5 @@
 from __future__ import annotations
+from config import USER_AGENT
 
 import os
 from typing import Any, Dict
@@ -6,6 +7,7 @@ from typing import Any, Dict
 import requests
 
 from modules.module_status import annotate, OK, SKIPPED, RATE_LIMITED, ERROR
+from modules import get_proxies
 
 CENSYS_PAT = os.getenv("CENSYS_PAT", "") or os.getenv("CENSYS_API_KEY", "")
 CENSYS_ORG_ID = os.getenv("CENSYS_ORG_ID", "")
@@ -23,7 +25,7 @@ class CensysLookup:
         return {
             "Authorization": f"Bearer {self.pat}",
             "Accept": "application/json",
-            "User-Agent": "PRISM-OSINT/2.4",
+            "User-Agent": USER_AGENT,
         }
 
     def _params(self) -> Dict[str, str]:
@@ -40,11 +42,13 @@ class CensysLookup:
         if not self.pat:
             return self._err_no_key()
         try:
+            proxies = get_proxies()
             r = requests.get(
                 f"{CENSYS_BASE}/global/asset/host/{ip}",
                 headers=self._headers(),
                 params=self._params(),
                 timeout=self.timeout,
+                proxies=proxies,
             )
             if r.status_code in (401, 403):
                 return annotate({"results": [], "total": 0}, ERROR, "Invalid Censys token or organization ID")

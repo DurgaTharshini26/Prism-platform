@@ -18,11 +18,36 @@ interface RecentScan { target: string; type: ScanType; ts: number; }
 const SCAN_TYPES: ScanType[] = ['domain', 'ip', 'email', 'phone', 'username'];
 
 export const MODULE_MAP: Record<ScanType, string[]> = {
-  domain:   ['whois', 'dns', 'geoip', 'cert_transparency', 'website', 'wayback', 'shodan', 'virustotal', 'censys', 'onion'],
+  domain:   ['whois', 'dns', 'geoip', 'cert_transparency', 'website', 'wayback', 'shodan', 'virustotal', 'censys', 'onion', 'hudsonrock', 'lunar', 'rdap'],
   ip:       ['geoip', 'shodan', 'virustotal', 'abuseipdb', 'censys'],
-  email:    ['emailrep', 'smtp', 'leaks', 'gravatar'],
+  email:    ['emailrep', 'smtp', 'leaks', 'gravatar', 'hudsonrock'],
   phone:    ['hlr'],
-  username: ['blackbird', 'maigret', 'github'],
+  username: ['blackbird', 'maigret', 'github', 'hudsonrock'],
+};
+
+const MODULE_DESCRIPTIONS: Record<string, string> = {
+  whois: 'Look up domain registration and ownership details',
+  dns: 'Check DNS records and domain configuration',
+  geoip: 'Find approximate geographic information for an IP address',
+  cert_transparency: 'Search certificate transparency records and subdomains',
+  website: 'Analyze publicly available website information',
+  wayback: 'Search historical snapshots from the Wayback Machine',
+  shodan: 'Search Shodan for exposed services and ports',
+  virustotal: 'Check reputation and threat intelligence with VirusTotal',
+  censys: 'Search internet hosts, services, and certificates with Censys',
+  onion: 'Search for related information on dark web sources',
+  hudsonrock: 'Check infostealer exposure using Hudson Rock',
+  lunar: 'Check domain exposure trends and malware families using Lunar',
+  abuseipdb: 'Check IP reputation and abuse reports with AbuseIPDB',
+  emailrep: 'Check email reputation and risk indicators',
+  smtp: 'Verify email server and SMTP availability',
+  leaks: 'Check whether an email appears in known data breaches',
+  gravatar: 'Look up a public Gravatar profile associated with an email',
+  hlr: 'Look up phone number carrier and network information',
+  blackbird: 'Search for a username across online platforms with Blackbird',
+  maigret: 'Search for a username across websites with Maigret',
+  github: 'Search GitHub for information associated with a username',
+  rdap: 'Look up domain registration using RDAP (modern WHOIS replacement)',
 };
 
 interface Props {
@@ -188,6 +213,11 @@ export function Sidebar({ onScan, onLoadScan, onCompare, isRunning, isStarting =
                 <X size={12} />
               </button>
             )}
+            {!target && (
+              <kbd className="absolute right-2 top-1/2 -translate-y-1/2 text-[9px] text-text-3 border border-border-1 rounded px-1.5 py-0.5 font-mono hidden sm:block select-none pointer-events-none">
+                /
+              </kbd>
+            )}
           </div>
         </div>
 
@@ -228,6 +258,8 @@ export function Sidebar({ onScan, onLoadScan, onCompare, isRunning, isStarting =
                 key={moduleId}
                 type="button"
                 onClick={() => toggleModule(moduleId)}
+                aria-pressed={modules.includes(moduleId)}
+                title={MODULE_DESCRIPTIONS[moduleId] || t(`sidebar.modules.${moduleId}`)}
                 className={`text-[10px] px-2 py-1 rounded transition-all font-medium ${
                   modules.includes(moduleId)
                     ? 'bg-blue/20 text-blue border border-blue/30'
@@ -308,7 +340,6 @@ export function Sidebar({ onScan, onLoadScan, onCompare, isRunning, isStarting =
 
 
 
-
             <div className="flex items-center gap-1 mb-1.5">
               <button
                 onClick={() => { setCompareMode(v => !v); setCompareSelection([]); }}
@@ -316,7 +347,6 @@ export function Sidebar({ onScan, onLoadScan, onCompare, isRunning, isStarting =
                   compareMode ? 'bg-purple/20 text-purple border border-purple/30' : 'bg-surface-3 text-text-3 border border-border-1 hover:text-text-2'
                 }`}
               >
-                
                 <span className="flex items-center gap-1"><GitCompare size={8} /> {t('sidebar.compare')}</span>
               </button>
 
@@ -333,9 +363,6 @@ export function Sidebar({ onScan, onLoadScan, onCompare, isRunning, isStarting =
                 <RotateCcw size={10} className={historyLoading ? 'spin' : ''} />
               </button>
             </div>
-
-
-
 
 
 

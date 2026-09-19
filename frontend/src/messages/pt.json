@@ -1,4 +1,16 @@
 {
+  "shortcuts": {
+    "title": "Atalhos de teclado",
+    "close": "Fechar",
+    "groupNavigation": "Navegação",
+    "groupAppearance": "Aparência",
+    "groupResults": "Resultados",
+    "focusSearch": "Ir para o campo de busca",
+    "showShortcuts": "Mostrar este painel",
+    "toggleTheme": "Tema claro ou escuro",
+    "prevTab": "Aba de resultados anterior",
+    "nextTab": "Próxima aba de resultados"
+  },
   "topbar": {
     "tagline": "Open Source Intelligence",
     "scanning": "Verificando",
@@ -30,6 +42,7 @@
       "username": "Usuário"
     },
     "modules": {
+      "rdap": "RDAP",
       "whois": "WHOIS",
       "dns": "DNS",
       "geoip": "GeoIP",
@@ -45,6 +58,8 @@
       "smtp": "Verificar SMTP",
       "leaks": "Vazamentos",
       "gravatar": "Gravatar",
+      "hudsonrock": "Exposição a infostealers",
+      "lunar": "Exposição do dominio",
       "hlr": "Consulta telefone",
       "blackbird": "Blackbird",
       "maigret": "Maigret",
@@ -95,7 +110,7 @@
       "line2Prefix": "Para acesso completo,",
       "selfHost": "hospede o PRISM",
       "line2Suffix": "com suas próprias chaves de API.",
-      "line3": "Os módulos que dependem de serviços de terceiros (crt.sh, Wayback Machine) podem retornar erros 5xx quando esses serviços estão fora do ar ou limitando requisições. A análise por IA pode ficar indisponível nesta demo: OpenRouter e Groq bloqueiam as requisições vindas da região de hospedagem da demo no edge da Cloudflare. Ao hospedar o PRISM por conta própria, tudo funciona normalmente."
+      "line3": "Os módulos que dependem de serviços de terceiros (crt.sh, Wayback Machine) podem retornar erros 5xx quando esses serviços estão fora do ar ou limitando requisições. A análise por IA funciona nesta demo, mas pode ser lenta: OpenRouter e Groq bloqueiam a região de hospedagem da demo, então as requisições passam por um proxy. Ao hospedar o PRISM por conta própria, tudo funciona normalmente e a IA responde na velocidade normal."
     }
   },
   "toolPanels": {
@@ -221,6 +236,11 @@
     "copyCurl": "Copiar como cURL",
     "scanAnother": "Nova verificação",
     "tabs": {
+      "rdap": "RDAP",
+      "github": "GitHub",
+      "gravatar": "Gravatar",
+      "hudsonrock": "Exposição a infostealers",
+      "lunar": "Exposição do dominio",
       "findings": "Resultados",
       "whois": "WHOIS",
       "dns": "DNS",
@@ -270,6 +290,7 @@
     "json": { "title": "Resultados JSON brutos", "show": "Mostrar dados brutos", "hide": "Ocultar dados brutos" },
     "ai": { "title": "Análise OSINT por IA · Nvidia Nemotron", "chatTitle": "Pergunte à IA", "generate": "Gerar resumo por IA", "generating": "Gerando análise…", "model": "Modelo", "regenerate": "Regenerar", "placeholder": "Pergunte qualquer coisa sobre esta varredura…" },
     "duration": "Concluído em {duration}",
+    "copyAllFindings": "Copiar todos os achados",
     "copyAllEmails": "Copiar todos os e-mails",
     "emailsCopied": "E-mails copiados!",
     "filterPlatforms": "Filtrar plataformas..."
@@ -322,6 +343,8 @@
     "es": "ES",
     "it": "IT",
     "pt": "PT",
-    "pl": "PL"
+    "pl": "PL",
+    "zh": "ZH",
+    "tr": "TR"
   }
 }

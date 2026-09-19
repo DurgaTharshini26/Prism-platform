@@ -4,14 +4,15 @@ from phonenumbers import carrier, geocoder, timezone
 from typing import Dict, Any, Optional
 import sys
 sys.path.append('..')
-from config import NUMVERIFY_API_KEY, Colors
+from config import Colors, NUMVERIFY_API_KEY, USER_AGENT
+from modules import get_proxies
 
 
 class HLRLookup:
 
     def __init__(self):
         self.api_key = NUMVERIFY_API_KEY
-        self.numverify_url = "http://apilayer.net/api/validate"
+        self.numverify_url = "https://apilayer.net/api/validate"
 
     def validate_phone(self, phone: str, country_code: str = None) -> Dict[str, Any]:
         result = {
@@ -90,15 +91,27 @@ class HLRLookup:
         return result
 
     def _numverify_lookup(self, phone: str) -> Optional[Dict]:
-        try:
-            params = {
-                "access_key": self.api_key,
-                "number": phone.replace("+", "").replace(" ", ""),
-                "format": 1
-            }
-            response = requests.get(self.numverify_url, params=params, timeout=10)
-            if response.status_code == 200:
+        params = {
+            "access_key": self.api_key,
+            "number": phone.replace("+", "").replace(" ", ""),
+            "format": 1
+        }
+        fallback = self.numverify_url.replace("https://", "http://", 1)
+        for url in (self.numverify_url, fallback):
+            try:
+                proxies = get_proxies()
+                response = requests.get(
+                    url,
+                    params=params,
+                    timeout=10,
+                    proxies=proxies,  
+                )
+                if response.status_code != 200:
+                    return None
                 data = response.json()
+                err = data.get("error") or {}
+                if isinstance(err, dict) and err.get("code") == 105:
+                    continue
                 if data.get("valid"):
                     return {
                         "country_code": data.get("country_code"),
@@ -107,8 +120,9 @@ class HLRLookup:
                         "carrier": data.get("carrier") or None,
                         "line_type": data.get("line_type")
                     }
-        except Exception:
-            pass
+            except Exception:
+                pass
+            return None
         return None
 
     def print_result(self, result: Dict):
@@ -146,10 +160,12 @@ class HLRLookup:
         clean = phone.replace("+", "").replace(" ", "").replace("-", "").replace("(", "").replace(")", "")
 
         try:
+            proxies = get_proxies()
             r = requests.get(
                 f"https://api.numlookupapi.com/v1/validate/{clean}",
-                headers={"User-Agent": "OSINT-Toolkit/2.0"},
+                headers={"User-Agent": USER_AGENT},
                 timeout=10,
+                proxies=proxies,  
             )
             if r.status_code == 200:
                 data = r.json()
@@ -176,10 +192,12 @@ class HLRLookup:
             ]:
                 try:
                     import re
+                    proxies = get_proxies()
                     r = requests.get(
                         site_url,
                         headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"},
                         timeout=8,
+                        proxies=proxies,  
                     )
                     if r.status_code == 200:
                         text = r.text

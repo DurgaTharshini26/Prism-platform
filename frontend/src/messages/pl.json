@@ -1,4 +1,16 @@
 {
+  "shortcuts": {
+    "title": "Skróty klawiszowe",
+    "close": "Zamknij",
+    "groupNavigation": "Nawigacja",
+    "groupAppearance": "Wygląd",
+    "groupResults": "Wyniki",
+    "focusSearch": "Przejdź do pola wyszukiwania",
+    "showShortcuts": "Pokaż ten panel",
+    "toggleTheme": "Motyw jasny lub ciemny",
+    "prevTab": "Poprzednia karta wyników",
+    "nextTab": "Następna karta wyników"
+  },
   "topbar": {
     "tagline": "Open Source Intelligence",
     "scanning": "Skanowanie",
@@ -30,6 +42,7 @@
       "username": "Nazwa użytkownika"
     },
     "modules": {
+      "rdap": "RDAP",
       "whois": "WHOIS",
       "dns": "DNS",
       "geoip": "GeoIP",
@@ -45,6 +58,8 @@
       "smtp": "Weryfikacja SMTP",
       "leaks": "Wycieki Danych",
       "gravatar": "Gravatar",
+      "hudsonrock": "Ekspozycja na infostealery",
+      "lunar": "Ekspozycja domeny",
       "hlr": "Informacje o Telefonie",
       "blackbird": "Blackbird",
       "maigret": "Maigret",
@@ -141,7 +156,7 @@
       "line2Prefix": "Aby uzyskać pełny dostęp,",
       "selfHost": "uruchom własną instancję PRISM",
       "line2Suffix": "z własnymi kluczami API.",
-      "line3": "Moduły zależne od usług zewnętrznych (crt.sh, Wayback Machine) mogą zwracać błędy 5xx, gdy te usługi są niedostępne lub ograniczają liczbę zapytań. Analiza AI może być niedostępna w tym demo: OpenRouter i Groq blokują żądania z regionu hostingu demo na swoim brzegu Cloudflare. Przy własnym hostingu wszystko działa normalnie."
+      "line3": "Moduły zależne od usług zewnętrznych (crt.sh, Wayback Machine) mogą zwracać błędy 5xx, gdy te usługi są niedostępne lub ograniczają liczbę zapytań. Analiza AI działa w tym demo, ale może być wolna: OpenRouter i Groq blokują region hostingu demo, więc żądania idą przez proxy. Przy własnym hostingu wszystko działa normalnie, a AI odpowiada z pełną szybkością."
     }
   },
   "toolPanels": {
@@ -267,6 +282,11 @@
     "copyCurl": "Kopiuj jako cURL",
     "scanAnother": "Skanuj kolejny cel",
     "tabs": {
+      "rdap": "RDAP",
+      "github": "GitHub",
+      "gravatar": "Gravatar",
+      "hudsonrock": "Ekspozycja na infostealery",
+      "lunar": "Ekspozycja domeny",
       "findings": "Wyniki analizy",
       "whois": "WHOIS",
       "dns": "DNS",
@@ -466,6 +486,7 @@
       "placeholder": "Zapytaj o cokolwiek na temat tego skanu…"
     },
     "duration": "Ukończono w {duration}",
+    "copyAllFindings": "Skopiuj wszystkie wyniki",
     "copyAllEmails": "Skopiuj wszystkie e-maile",
     "emailsCopied": "E-maile skopiowane!",
     "filterPlatforms": "Filtruj platformy..."
@@ -516,6 +537,10 @@
     "de": "DE",
     "fr": "FR",
     "es": "ES",
-    "pl": "PL"
+    "it": "IT",
+    "pt": "PT",
+    "pl": "PL",
+    "zh": "ZH",
+    "tr": "TR"
   }
 }

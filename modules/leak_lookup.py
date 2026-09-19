@@ -3,8 +3,9 @@ import hashlib
 from typing import Dict, Any, List, Optional
 import sys
 sys.path.append('..')
-from config import LEAK_LOOKUP_API_KEY, HIBP_API_KEY, Colors
+from config import Colors, HIBP_API_KEY, LEAK_LOOKUP_API_KEY, USER_AGENT
 from modules.module_status import annotate, classify, print_status_notice, OK, SKIPPED, RATE_LIMITED, ERROR
+from modules import get_proxies
 
 
 class LeakLookup:
@@ -31,16 +32,18 @@ class LeakLookup:
             return annotate(result, SKIPPED, "No API key configured (HIBP_API_KEY)")
 
         headers = {
-            "User-Agent": "OSINT-Tool",
+            "User-Agent": USER_AGENT,
             "hibp-api-key": self.hibp_key,
         }
 
         try:
+            proxies = get_proxies()
             response = requests.get(
                 f"{self.HIBP_API}/breachedaccount/{email}",
                 headers=headers,
                 params={"truncateResponse": "false"},
-                timeout=10
+                timeout=10,
+                proxies=proxies,  
             )
 
             if response.status_code == 200:
@@ -87,10 +90,12 @@ class LeakLookup:
         }
 
         try:
+            proxies = get_proxies()
             response = requests.get(
                 f"{self.XON_API}/check-email/{email}",
-                headers={"User-Agent": "OSINT-Tool"},
-                timeout=10
+                headers={"User-Agent": USER_AGENT},
+                timeout=10,
+                proxies=proxies,  
             )
 
             if response.status_code == 200:
@@ -129,11 +134,13 @@ class LeakLookup:
         }
 
         try:
+            proxies = get_proxies()
             response = requests.get(
                 self.LEAKCHECK_PUBLIC,
                 params={"check": email},
-                headers={"User-Agent": "Mozilla/5.0 (compatible; PRISM-OSINT)"},
-                timeout=10
+                headers={"User-Agent": USER_AGENT},
+                timeout=10,
+                proxies=proxies,  
             )
 
             if response.status_code == 200:
@@ -174,9 +181,11 @@ class LeakLookup:
         suffix = sha1_hash[5:]
 
         try:
+            proxies = get_proxies()
             response = requests.get(
                 f"https://api.pwnedpasswords.com/range/{prefix}",
-                timeout=10
+                timeout=10,
+                proxies=proxies,  
             )
 
             if response.status_code == 200:
@@ -208,6 +217,7 @@ class LeakLookup:
             return annotate(result, SKIPPED, "No API key configured (LEAK_LOOKUP_API_KEY)")
 
         try:
+            proxies = get_proxies()
             response = requests.post(
                 self.LEAK_LOOKUP_API,
                 data={
@@ -215,7 +225,8 @@ class LeakLookup:
                     "type": query_type,
                     "query": query
                 },
-                timeout=30
+                timeout=30,
+                proxies=proxies,  
             )
 
             if response.status_code == 200:

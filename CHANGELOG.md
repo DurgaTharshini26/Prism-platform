@@ -6,6 +6,126 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [2.9.2] — 2026-09-13
+
+### Changed
+- The demo's AI panel used to say analysis did not work at all, because the hosting region is blocked by every LLM provider. The demo now routes those calls through a proxy, so they go through, just slowly. The on-page notice and the FAQ say that instead of calling it broken.
+
+---
+
+## [2.9.1] — 2026-09-13
+
+### Fixed
+- The AI request timeout was hardcoded at 30 seconds, which is too short for slower models or when the call goes through a proxy, so a working provider would fail with a read timeout. It is now `LLM_TIMEOUT` (default 90 seconds), with a separate short connect timeout.
+
+---
+
+## [2.9.0] — 2026-09-10
+
+Most of this release came from contributors. Names are on the pull requests.
+
+### Security
+- **`MODULE_PROXY` reached two modules out of twenty-two.** Everything else connected directly. Anyone who set a proxy so a target would not see where the request came from was getting that for Hudson Rock and Lunar, and their own address for the other twenty, while the readme said the setting covered outbound module requests. A shared helper now routes every module that makes an HTTP call, and a walk over the syntax tree of `modules/` confirms nothing is left out (#324, #331).
+- The dark-web lookups went through the same fix afterwards. They had been left out on the grounds that Tor needs a SOCKS proxy, but `onion_checker` never touches Tor: both of its requests go to ahmia.fi and darksearch.io over ordinary HTTPS, which is precisely the traffic someone sets a proxy to hide.
+- **Six handlers returned the text of whatever exception they caught.** Depending on what broke that could be a filesystem path, a library internal, or a third-party URL with a key in the query string. They log the detail and answer with a fixed message now. The 4xx responses are unchanged, since those messages are written for the caller and are safe (#323, #334).
+- Only `maigret` is still outside `MODULE_PROXY`, because it runs as a subprocess. That is written down in `SECURITY.md` rather than left for someone to discover.
+
+### Added
+- **Report translations for Spanish, French, Italian, Polish, Portuguese and Chinese.** Reports in those interfaces used to fall back to English. All nine locales now carry the same 57 keys (#295, #337).
+- **The HTML report follows the reader's dark mode**, with light as the base so it degrades correctly. The PDF, which is built from the same HTML by a converter that ignores media queries, now comes out light instead of dark (#303, #336).
+- **Scan the current page from the browser extension.** No extra permission was needed for it: the existing host permissions already cover reading the active tab's URL (#243, #332).
+- **A "copy all findings" button** on the OPSEC findings list (#236, #329).
+- **A `/` hint in the target field**, shown only while the field is empty (#234, #327).
+- RDAP registration lookups alongside WHOIS, and tests for `graph_builder`, `detect_type`, scan-target normalization and the Slack and Discord webhook formatters.
+
+### Fixed
+- **Discord webhooks were silently dropped when a scan found enough.** Discord rejects a field value over 1024 characters, and `_send_webhook` swallows the error, so a busy scan produced no notification and no complaint. Long values are truncated now (#321, #335).
+- **`<html lang>` was always `en`** whatever interface language was selected, so screen readers and translation tools were told the wrong language (#235, #328).
+- **RDAP reported `292` as the registrar for github.com.** jCard properties are `[name, params, type, value]`, so reading index 2 gave the type and every contact came back as `"text"`; the registrar was read from the entity handle, which is the IANA id rather than a name.
+- **Every `.ru` domain looked unregistered.** A `404` from rdap.org was read as "not registered", but plenty of zones serve no RDAP at all. The zone is checked against the bootstrap map first and the module reports `skipped`.
+- **A rate-limited request reached the browser as a CORS error** rather than a `429`, because `add_middleware` wraps from the inside out and CORS had ended up innermost.
+- **File work blocked the event loop in two routes**, stalling every other request including websocket scan progress while an upload was copied or the scan directory was read.
+- The four `react-hooks/exhaustive-deps` warnings are gone, each by a different fix, so the loading animation does not restart on a parent re-render (#322, #338).
+
+### Changed
+- **One User-Agent everywhere**, built from `PRISM_VERSION`, replacing ten strings whose versions had drifted between 2.0 and 2.4. The browser strings that certain sites require are deliberately kept. A test fails the build if a new module inlines one (#320, #333).
+- The container runs as uid 1000 rather than root, and CI checks it stays that way. Bind-mounted directories may need `chown -R 1000:1000`.
+- Leaflet is pinned with subresource integrity, using the hashes published on leafletjs.com.
+- The readme lost nine badges and the comparison table. Keeping accurate claims about four other projects is not a commitment worth making, and a table where one column is all green reads as advertising.
+
+### Tests
+- 326 to 387.
+
+---
+
+## [2.8.1] — 2026-09-07
+
+### Security
+- **A webhook could still be sent to a host that refused to resolve** — the guard checks every address a hostname resolves to and blocks private ones, but an unresolvable hostname fell through and the request went out anyway. That branch existed only so two delivery tests aiming at `hooks.example.com` would pass, which made the production behaviour a side effect of the tests. It leaves a rebinding window: answer `NXDOMAIN` while the check runs, resolve to an internal address by the time `requests` looks it up again. Any refusal from the resolver now stops the send, and the tests stub the resolver instead.
+- **The container ran everything as root** — it now creates uid 1000 and drops to it. If you bind-mount `./results` from a directory owned by someone else, `chown -R 1000:1000` on the host. CI checks the image is unprivileged and can still write to all four data directories.
+- **Leaflet was pulled from unpkg with no integrity attribute** — the map page trusted whatever the CDN served. Both the script and the stylesheet now carry the `sha256` hashes published on leafletjs.com, plus `crossorigin`.
+- **numverify was called over plain HTTP** — the phone number and the API key travelled in the query string. It goes over HTTPS now, falling back to HTTP only when the free plan answers with error 105, which is the one case where the API itself refuses TLS.
+- Secret scanning, push protection and Dependabot security updates are on for the repository. That surfaced nine advisories nobody had seen; five are closed by the dependency updates in this release.
+
+### Added
+- **RDAP module** (#306, by [@sOuL2000s](https://github.com/sOuL2000s)) — registration data over RDAP alongside WHOIS, discovering the server per TLD from the IANA bootstrap file and falling back to rdap.org. Returns registration dates, registrar, nameservers and contacts.
+- **Keyboard shortcuts panel.**
+- Tooltips on the standalone tool cards (#305).
+- Multi-arch images on GHCR, built for `linux/amd64` and `linux/arm64` on every release tag.
+- CodeQL on pushes, pull requests and weekly; a labeler; a greeting for first-time contributors; and stale handling for pull requests only, leaving issues alone.
+
+### Fixed
+- **RDAP reported `292` as the registrar** — jCard properties are `[name, params, type, value]`, so reading index 2 returned the type and every contact came back as `"text"`. The registrar was taken from the entity handle instead, which is the IANA registrar id rather than a name. The test fixture used a three-element vCard, which real RDAP never sends, so nothing caught it.
+- **Every `.ru` domain looked unregistered** — a `404` from rdap.org was read as "not registered", but plenty of TLDs serve no RDAP at all. The zone is checked against the bootstrap map first and the module reports `skipped`.
+- **A rate-limited request came back as a CORS error** — `add_middleware` wraps from the inside out, so CORS ended up innermost and anything short-circuited above it answered without the headers. The browser hid the `429` behind an opaque network failure. CORS is outermost now; proxy headers still run before the limiter, so the client IP behind a proxy is unchanged.
+- **File work blocked the event loop in two routes** — the metadata endpoint copied the whole upload to a temp file inline, and clearing scans read every file in `scan_data` inline. Both stalled every other request while they ran, websocket scan progress included.
+- The demo says plainly that AI analysis will not work there, on the page rather than only in the docs.
+
+### Tests
+- 326 → 343, covering the middleware order, the CORS headers on a rate-limited response, and each way the webhook resolver can refuse.
+
+---
+
+## [2.8.0] — 2026-09-02
+
+### Fixed
+- **Username search invented accounts** — most of the 50 sites were judged by HTTP status alone, so any site answering `200` for a name nobody registered was reported as a hit. Probing all of them with a nonexistent username caught ten doing exactly that: Pinterest, Spotify, Medium, 500px, Imgur, HackerRank, Kaggle, Trello, Duolingo and OnlyFans. Five of them returned a body byte-identical to a real profile's. A `200` now triggers one control request per site with a username that cannot exist, and the hit only stands if the target's page names the target while the control's page does not name the control. Sites that echo whatever name is in the URL can no longer produce a hit. Measured against 21 live sites, false positives went from ten to zero.
+- **Twitch reported every username as found** — its text marker stopped appearing on the page. Markers are now cross-checked against the control response, and a marker missing from both is treated as stale, falling back to the name test.
+- **A blocked site looked like an absent account** — `401`, `403`, `429` and `5xx` become `unknown` instead of `not_found`. A site that refused us tells us nothing about the account, and reporting that as absence was producing quiet false negatives.
+- **The AI panel only ever tried one provider** — it picked one at import, so a configured Groq key sat unused while OpenRouter answered "Access denied by security policy". Every configured key is now a provider, tried in order until one returns a completion, each with its own model. When all fail, the response names each provider and its reason.
+- **Shodan showed nothing without a paid key** — a free key gets `403` on the host endpoint and no key skipped the module outright. It now falls back to InternetDB, Shodan's keyless dataset, for ports, hostnames, tags, CPEs and CVEs. A paid key still goes to Shodan for organisation, location and banners. An invalid key is still an error rather than a silent downgrade.
+- `host_info` requires an IP. It was interpolating whatever it was handed into the request path, and `validate_target` allows a slash through.
+
+### Added
+- **Ollama service in the compose file**, behind a profile so it stays out of the way. `docker compose --profile ollama up -d`, point `LLM_BASE_URL` at `http://ollama:11434/v1/chat/completions`, and the AI panel runs with nothing leaving the machine — which is the only fix when every hosted provider refuses the instance's region.
+- A custom endpoint no longer needs a key: `LLM_BASE_URL` alone is enough, since Ollama has nothing to authenticate.
+- `GROQ_MODEL`, and the `LLM_*` variables, documented in `.env.example` — it had none of them despite the README describing them since 2.6.0.
+
+### Tests
+- 285 → 326, covering the control-request detection, stale text markers, blocked-response handling, provider fallback, the Shodan fallback and its IP guard.
+
+---
+
+## [2.7.0] — 2026-09-01
+
+### Added
+- **Domain Exposure module (Lunar)** — how often a domain turns up in infostealer logs and breach data over a rolling year, split between staff and customers, with a monthly timeline and breakdowns by malware family, affected service and country. Needs no API key and returns aggregates only, but it is still a third party, so it is off unless `LUNAR_ENABLED` is set. Domain targets only; outbound requests honour `MODULE_PROXY`. Lunar builds a report on first request and caches it for a month, so a domain nobody has queried yet is reported as skipped rather than failed (#286).
+
+### Security
+- **Rate limits could be bypassed with a header** — `client_ip` read `X-Forwarded-For` and `X-Real-IP` whatever `TRUST_PROXY_HEADERS` was set to, and the limiter keys on its result. With no proxy in front, which is the default, a different header value per request landed in a fresh bucket every time, so `10/minute` on `/api/scan` and the `200/day` and `60/hour` ceilings meant nothing, and each scan bought fans out to dozens of third-party lookups. The headers are now read only when `TRUST_PROXY_HEADERS` is on. The daily scan quota was never affected: it keys on the API-key principal.
+- **A username could redirect a lookup to another host** — Blackbird interpolated the username into its URL templates unescaped, and the Tumblr template carries the placeholder in the host position, so scanning `evil.com/#` sent the request to `evil.com`. `validate_target` rejects only ``[;|`$<>{}]``, so a slash or a hash reached the module untouched. Usernames are now percent-encoded before substitution.
+- **A username could write outside `results/`** — Blackbird built its export filenames straight from the username, so `../../pwned` escaped the output directory. Names are now sanitised the way `maigret_wrapper` and `report_generator` already did.
+
+### Fixed
+- **JSON export failed on some usernames** — `user?name` raised `OSError` before writing anything and a name past the path limit raised `FileNotFoundError`, same root cause as the export path issue above.
+- **A hanging maigret froze the scan** — the wrapper read output to EOF and then called `process.wait()`, neither with a timeout, so a maigret that stopped producing output blocked its worker for good and the scan neither finished nor reported an error. A watchdog now stops it after `MAIGRET_MAX_RUNTIME` seconds, 600 by default.
+- **A failed Blackbird search looked like a clean one** — the API and CLI threw away what the module returned and read `bb.results`, storing `[]` for a search that raised, which reads the same as checking every site and finding nothing.
+
+### Tests
+- 249 → 285, covering the Lunar module, the maigret watchdog, the rate-limit key, hostile usernames in export paths, and host escapes in the username URL templates.
+
+---
+
 ## [2.6.0] — 2026-07-27
 
 ### Added
@@ -116,7 +236,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Changed
 - Sidebar refactored to use i18n module labels (`sidebar.modules.<id>`) and localized scan type buttons.
 - `_rate_limit_exceeded_handler` replaces inline lambda for proper 429 response headers.
-
 
 ---
 

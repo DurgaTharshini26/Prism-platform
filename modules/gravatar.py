@@ -2,10 +2,11 @@ import hashlib
 from typing import Dict, Any, List
 import requests
 import sys
+from modules import get_proxies
 
 sys.path.append("..")
 
-from config import Colors
+from config import Colors, USER_AGENT
 from modules.module_status import (
     annotate,
     print_status_notice,
@@ -27,7 +28,7 @@ class GravatarRecon:
     def _headers(self) -> Dict[str, str]:
         return {
             "Accept": "application/json",
-            "User-Agent": "PRISM-OSINT",
+            "User-Agent": USER_AGENT,
         }
 
     def lookup(self, email: str) -> Dict[str, Any]:
@@ -46,10 +47,12 @@ class GravatarRecon:
 
         email_hash = hashlib.sha256(email.encode("utf-8")).hexdigest()
         try:
+            proxies = get_proxies()
             r = requests.get(
                 f"{self.BASE_URL}/{email_hash}.json",
                 headers=self._headers(),
                 timeout=15,
+                proxies=proxies,  
             )
 
             if r.status_code == 404:

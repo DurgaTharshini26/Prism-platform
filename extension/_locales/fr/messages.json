@@ -17,6 +17,15 @@
   "scanButton": {
     "message": "Scanner"
   },
+  "scanPageButton": {
+    "message": "Analyser cette page"
+  },
+  "scanPageUnsupported": {
+    "message": "Cette page ne peut pas être analysée."
+  },
+  "scanPageHostname": {
+    "message": "Impossible de déterminer le nom d’hôte de la page."
+  },
   "serverLabel": {
     "message": "Serveur"
   },
@@ -28,6 +37,9 @@
   },
   "savedOk": {
     "message": "Enregistré"
+  },
+  "clearRecent": {
+    "message": "Effacer les cibles récentes"
   },
   "apiKeyLabel": {
     "message": "Clé API (facultatif)"
@@ -52,5 +64,11 @@
   },
   "openFull": {
     "message": "Ouvrir le rapport complet"
+  },
+  "copy": {
+    "message": "Copier"
+  },
+  "copied": {
+    "message": "Copié ✓"
   }
 }

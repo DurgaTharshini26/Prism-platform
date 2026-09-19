@@ -43,12 +43,14 @@ class TestWebhookDelivery:
         from web import app as app_mod
         captured = {}
 
-        def fake_post(url, json=None, headers=None, timeout=None):
+        def fake_post(url, json=None, headers=None, timeout=None, allow_redirects=None):
             captured["url"] = url
             captured["json"] = json
             captured["headers"] = headers
+            captured["allow_redirects"] = allow_redirects
 
         monkeypatch.setattr(app_mod._requests, "post", fake_post)
+        monkeypatch.setattr(app_mod, "_resolve_all_public", lambda h: None)
         monkeypatch.setattr(app_mod, "WEBHOOK_SECRET", "shh")
         payload = {"scan_id": "abc", "status": "completed"}
         app_mod._send_webhook("https://hooks.example.com/prism", payload)
@@ -57,6 +59,7 @@ class TestWebhookDelivery:
         assert captured["json"] == payload
         assert captured["headers"]["X-Prism-Secret"] == "shh"
         assert captured["headers"]["Content-Type"] == "application/json"
+        assert captured["allow_redirects"] is False
 
     def test_swallows_post_errors(self, monkeypatch):
         from web import app as app_mod
@@ -65,6 +68,7 @@ class TestWebhookDelivery:
             raise RuntimeError("network down")
 
         monkeypatch.setattr(app_mod._requests, "post", boom)
+        monkeypatch.setattr(app_mod, "_resolve_all_public", lambda h: None)
                         
         app_mod._send_webhook("https://hooks.example.com/prism", {"x": 1})
 
@@ -90,7 +94,7 @@ class TestTestWebhookEndpoint:
     def test_returns_ok_on_success(self, monkeypatch):
         captured = {}
 
-        def fake_post(url, json=None, headers=None, timeout=None):
+        def fake_post(url, json=None, headers=None, timeout=None, allow_redirects=None):
             captured["url"] = url
             captured["json"] = json
 
@@ -145,7 +149,7 @@ class TestTestWebhookEndpoint:
     def test_payload_shape(self, monkeypatch):
         captured = {}
 
-        def fake_post(url, json=None, headers=None, timeout=None):
+        def fake_post(url, json=None, headers=None, timeout=None, allow_redirects=None):
             captured["json"] = json
 
         client = self._client(monkeypatch, fake_post)
@@ -159,3 +163,66 @@ class TestTestWebhookEndpoint:
         assert "target" in payload
         assert "added" in payload
         assert "changes" in payload
+
+    def test_delivery_failure_does_not_leak_exception_text(self, monkeypatch):
+        from web import app as app_mod
+
+        def boom(url, payload):
+            raise RuntimeError("connection to internal.example failed")
+
+        client = self._client(monkeypatch)
+        monkeypatch.setattr(app_mod, "_send_webhook", boom)
+        resp = client.post(
+            "/api/watchlist/test-webhook",
+            json={"webhook_url": "https://hooks.example.com/prism"},
+            headers={"X-API-Key": "test-key"},
+        )
+        assert resp.status_code == 502
+        assert "internal.example" not in resp.text
+        assert "could not be delivered" in resp.json()["error"]
+
+    def test_delivery_failure_includes_http_status_when_available(self, monkeypatch):
+        from web import app as app_mod
+
+        class FakeDeliveryError(RuntimeError):
+            def __init__(self):
+                super().__init__("upstream refused")
+                self.response = type("Response", (), {"status_code": 503})()
+
+        def boom(url, payload):
+            raise FakeDeliveryError()
+
+        client = self._client(monkeypatch)
+        monkeypatch.setattr(app_mod, "_send_webhook", boom)
+        resp = client.post(
+            "/api/watchlist/test-webhook",
+            json={"webhook_url": "https://hooks.example.com/prism"},
+            headers={"X-API-Key": "test-key"},
+        )
+        assert resp.status_code == 502
+        assert "(HTTP 503)" in resp.json()["error"]
+
+class TestWebhookResolutionGuard:
+    def _blocked(self, monkeypatch, error):
+        from web import app as app_mod
+        sent = []
+
+        def fake_post(*a, **kw):
+            sent.append(a)
+
+        def refuse(hostname):
+            raise ValueError(error)
+
+        monkeypatch.setattr(app_mod._requests, "post", fake_post)
+        monkeypatch.setattr(app_mod, "_resolve_all_public", refuse)
+        app_mod._send_webhook("https://hooks.example.com/prism", {"x": 1})
+        return sent
+
+    def test_private_address_is_not_posted_to(self, monkeypatch):
+        assert self._blocked(monkeypatch, "webhook_url resolves to a private/internal address") == []
+
+    def test_unresolvable_host_is_not_posted_to(self, monkeypatch):
+        assert self._blocked(monkeypatch, "webhook_url hostname cannot be resolved") == []
+
+    def test_empty_resolution_is_not_posted_to(self, monkeypatch):
+        assert self._blocked(monkeypatch, "webhook_url hostname did not resolve") == []

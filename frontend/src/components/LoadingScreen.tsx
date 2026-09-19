@@ -78,7 +78,6 @@ function LoadingScreen({ fading, onDone }: { fading: boolean; onDone: () => void
   const [activeModules, setActiveModules] = useState<number[]>([]);
   const [bootLine, setBootLine] = useState('');
   const calledDone = useRef(false);
-
   useEffect(() => {
     const progressTimer = setInterval(() => {
       setProgress(p => {
@@ -86,7 +85,7 @@ function LoadingScreen({ fading, onDone }: { fading: boolean; onDone: () => void
           clearInterval(progressTimer);
           if (!calledDone.current) {
             calledDone.current = true;
-            setTimeout(onDone, 300);
+            setTimeout(() => onDone(), 300);
           }
           return 100;
         }
@@ -103,7 +102,7 @@ function LoadingScreen({ fading, onDone }: { fading: boolean; onDone: () => void
       setTimeout(() => setActiveModules(prev => [...prev, i]), 350 + i * 520);
     });
 
-    const bootText = '> PRISM OSINT v2.6.0 - boot sequence initiated...';
+    const bootText = '> PRISM OSINT v2.9.2 - boot sequence initiated...';
     let charIdx = 0;
     const typeTimer = setInterval(() => {
       if (charIdx <= bootText.length) {
@@ -119,7 +118,7 @@ function LoadingScreen({ fading, onDone }: { fading: boolean; onDone: () => void
       statusTimers.forEach(t => clearTimeout(t));
       clearInterval(typeTimer);
     };
-  }, []);
+  }, [onDone]);
 
   return (
     <div className={`prism-loading${fading ? ' fading' : ''}`}>
@@ -158,7 +157,7 @@ function LoadingScreen({ fading, onDone }: { fading: boolean; onDone: () => void
       </div>
 
       <div className="prism-loading-text">PRISM</div>
-      <div className="prism-loading-sub">OSINT Platform v2.6.0</div>
+      <div className="prism-loading-sub">OSINT Platform v2.9.2</div>
 
       <div className="prism-status-bar">
         <div className="prism-status-text">{STATUSES[statusIdx]}</div>

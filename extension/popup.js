@@ -28,6 +28,52 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const formView = $("formView"), scanView = $("scanView");
 const urlInput = $("url"), keyInput = $("apikey"), targetInput = $("target"), saved = $("saved");
 const bar = $("bar"), barWrap = $("barWrap"), logEl = $("log"), statusEl = $("status");
+const recentEl = $("recentTargets");
+
+const RECENT_KEY = "recentTargets";
+const MAX_RECENT = 5;
+
+function renderRecentTargets(list) {
+  clear(recentEl);
+  recentEl.hidden = !list.length;
+  list.forEach((target) => {
+    const chip = mk("button", "chip", target);
+    chip.type = "button";
+    chip.addEventListener("click", () => {
+      targetInput.value = target;
+      targetInput.focus();
+    });
+    recentEl.appendChild(chip);
+  });
+  if (list.length) {
+    const clearButton = mk("button", "clear-recent", t("clearRecent", "Clear recent targets"));
+    clearButton.type = "button";
+    clearButton.addEventListener("click", () => {
+      chrome.storage.local.set({ [RECENT_KEY]: [] }, () => {
+        if (chrome.runtime.lastError) return;
+        renderRecentTargets([]);
+        targetInput.focus();
+      });
+    });
+    recentEl.appendChild(clearButton);
+  }
+}
+
+function loadRecentTargets() {
+  chrome.storage.local.get({ [RECENT_KEY]: [] }, (data) => renderRecentTargets(data[RECENT_KEY]));
+}
+
+function saveRecentTarget(target) {
+  chrome.storage.local.get({ [RECENT_KEY]: [] }, (data) => {
+    const list = data[RECENT_KEY].filter((t) => t.toLowerCase() !== target.toLowerCase());
+    list.unshift(target);
+    const trimmed = list.slice(0, MAX_RECENT);
+    chrome.storage.local.set({ [RECENT_KEY]: trimmed });
+    renderRecentTargets(trimmed);
+  });
+}
+
+loadRecentTargets();
 
 function showForm() { formView.hidden = false; scanView.hidden = true; }
 function showScan() { formView.hidden = true; scanView.hidden = false; }
@@ -65,9 +111,40 @@ function runScan() {
   const server = baseUrl(urlInput.value);
   const apiKey = keyInput.value.trim();
   chrome.storage.sync.set({ instanceUrl: urlInput.value.trim(), apiKey });
+  saveRecentTarget(target);
+  start(target, server, apiKey);
+}
+async function runPageScan() {
+  const tabs = await chrome.tabs.query({
+    active: true,
+    currentWindow: true
+  });
+
+  const tab = tabs[0];
+  if (!tab || !tab.url) return;
+
+  const url = new URL(tab.url);
+
+  if (url.protocol !== "http:" && url.protocol !== "https:") {
+    return fail(t("scanPageUnsupported", "This page cannot be scanned."));
+  }
+
+  const target = url.hostname;
+  if (!target) return fail(t("scanPageHostname", "Could not determine the page hostname."));
+
+  const server = baseUrl(urlInput.value);
+  const apiKey = keyInput.value.trim();
+
+  chrome.storage.sync.set({
+    instanceUrl: urlInput.value.trim(),
+    apiKey
+  });
+
+  saveRecentTarget(target);
   start(target, server, apiKey);
 }
 $("scan").addEventListener("click", runScan);
+$("scanPage").addEventListener("click", runPageScan);
 targetInput.addEventListener("keydown", (e) => { if (e.key === "Enter") runScan(); });
 
 function setStatus(text, cls) { statusEl.textContent = text; statusEl.className = "status" + (cls ? " " + cls : ""); }
@@ -78,11 +155,22 @@ function fail(msg) {
 }
 
 let seen;
-function resetScanUi(target) {
+function resetScanUi(target, server) {
   seen = new Set();
   clear(logEl); clear($("results")); $("error").hidden = true;
   barWrap.classList.remove("done"); bar.style.width = "0";
   $("scanTarget").textContent = target;
+  $("scanTarget").title = target;
+
+  const serverInfoEl = $("scanServerInfo");
+  if (server) {
+    let host = server;
+    try { host = new URL(server).host; } catch (e) {}
+    serverInfoEl.textContent = `${t("serverLabel", "Server")}: ${host}`;
+    serverInfoEl.hidden = false;
+  } else {
+    serverInfoEl.hidden = true;
+  }
 }
 function pushLog(msg) {
   const key = `${msg.type}:${msg.module}`;
@@ -101,7 +189,7 @@ function pushLog(msg) {
 }
 
 async function start(target, server, apiKey) {
-  showScan(); resetScanUi(target); setStatus(t("scanning", "Scanning…"));
+  showScan(); resetScanUi(target, server); setStatus(t("scanning", "Scanning…"));
   const headers = { "Content-Type": "application/json" };
   if (apiKey) headers["X-API-Key"] = apiKey;
   let scanId;
@@ -121,7 +209,7 @@ async function start(target, server, apiKey) {
 }
 
 function resume(active) {
-  resetScanUi(active.target); setStatus(t("scanning", "Scanning…"));
+  resetScanUi(active.target, active.server); setStatus(t("scanning", "Scanning…"));
   poll(active);
 }
 
@@ -204,7 +292,10 @@ function moduleCard(name, obj) {
   if (!rows.length) return null;
 
   const card = mk("div", "card");
-  card.appendChild(mk("h3", null, TITLES[name] || name));
+  const head = mk("div", "card-head");
+  head.appendChild(mk("h3", null, TITLES[name] || name));
+  head.appendChild(copyButton(TITLES[name] || name, rows));
+  card.appendChild(head);
   rows.forEach(([k, v]) => {
     const row = mk("div", "row");
     row.appendChild(mk("span", "k", k));
@@ -215,4 +306,18 @@ function moduleCard(name, obj) {
     card.appendChild(row);
   });
   return card;
+}
+
+function copyButton(title, rows) {
+  const btn = mk("button", "copy-btn", t("copy", "Copy"));
+  btn.type = "button";
+  btn.addEventListener("click", () => {
+    const lines = rows.map(([k, v]) => `${k}: ${Array.isArray(v) ? v.join(", ") : v}`);
+    navigator.clipboard.writeText([title, ...lines].join("\n")).then(() => {
+      btn.textContent = t("copied", "Copied ✓");
+      btn.disabled = true;
+      setTimeout(() => { btn.textContent = t("copy", "Copy"); btn.disabled = false; }, 1200);
+    });
+  });
+  return btn;
 }

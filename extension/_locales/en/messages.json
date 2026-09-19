@@ -17,6 +17,15 @@
   "scanButton": {
     "message": "Scan"
   },
+  "scanPageButton": {
+    "message": "Scan this page"
+  },
+  "scanPageUnsupported": {
+    "message": "This page cannot be scanned."
+  },
+  "scanPageHostname": {
+    "message": "Could not determine the page hostname."
+  },
   "serverLabel": {
     "message": "Server"
   },
@@ -28,6 +37,9 @@
   },
   "savedOk": {
     "message": "Saved"
+  },
+  "clearRecent": {
+    "message": "Clear recent targets"
   },
   "apiKeyLabel": {
     "message": "API key (optional)"
@@ -52,5 +64,11 @@
   },
   "openFull": {
     "message": "Open full report"
+  },
+  "copy": {
+    "message": "Copy"
+  },
+  "copied": {
+    "message": "Copied ✓"
   }
 }

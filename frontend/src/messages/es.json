@@ -1,4 +1,16 @@
 {
+  "shortcuts": {
+    "title": "Atajos de teclado",
+    "close": "Cerrar",
+    "groupNavigation": "Navegación",
+    "groupAppearance": "Apariencia",
+    "groupResults": "Resultados",
+    "focusSearch": "Ir al campo de búsqueda",
+    "showShortcuts": "Mostrar este panel",
+    "toggleTheme": "Tema claro u oscuro",
+    "prevTab": "Pestaña anterior de resultados",
+    "nextTab": "Pestaña siguiente de resultados"
+  },
   "topbar": {
     "tagline": "Inteligencia de Fuentes Abiertas",
     "scanning": "Escaneando",
@@ -19,6 +31,7 @@
     "compareSelected": "Comparar seleccionados",
     "noHistory": "Sin historial",
     "modules": {
+      "rdap": "RDAP",
       "whois": "WHOIS",
       "dns": "DNS",
       "geoip": "GeoIP",
@@ -34,6 +47,8 @@
       "smtp": "Verif. SMTP",
       "leaks": "Filtraciones",
       "gravatar": "Gravatar",
+      "hudsonrock": "Exposición a infostealers",
+      "lunar": "Exposición del dominio",
       "hlr": "Teléfono",
       "blackbird": "Blackbird",
       "maigret": "Maigret",
@@ -89,14 +104,14 @@
       "line2Prefix": "Para acceso completo,",
       "selfHost": "autoaloje PRISM",
       "line2Suffix": "con sus propias claves de API.",
-      "line3": "Los módulos que dependen de servicios de terceros (crt.sh, Wayback Machine) pueden devolver errores 5xx cuando esos servicios fallan o limitan las peticiones. El análisis con IA puede no estar disponible en esta demo: OpenRouter y Groq bloquean las solicitudes desde la región de alojamiento de la demo en su edge de Cloudflare. Al autoalojar PRISM, todo funciona con normalidad."
+      "line3": "Los módulos que dependen de servicios de terceros (crt.sh, Wayback Machine) pueden devolver errores 5xx cuando esos servicios fallan o limitan las peticiones. El análisis con IA funciona en esta demo, pero puede ir lento: OpenRouter y Groq bloquean la región de alojamiento de la demo, así que las solicitudes salen a través de un proxy. Al autoalojar PRISM, todo funciona con normalidad y la IA responde a velocidad normal."
     }
   },
   "progress": { "modulesLabel": "módulos", "initializing": "Inicializando escaneo…", "running": "Ejecutando…", "log": "Registro de progreso" },
   "results": {
     "htmlReport": "Informe HTML", "pdfReport": "Informe PDF", "jsonReport": "Descargar JSON",
     "csvReport": "Descargar CSV", "mdReport": "Descargar Markdown", "copyCurl": "Copiar como cURL", "scanAnother": "Escanear otro",
-    "tabs": { "findings": "Hallazgos", "whois": "WHOIS", "dns": "DNS", "subdomains": "Subdominios", "accounts": "Cuentas", "threats": "Amenazas", "censys": "Censys", "darkweb": "Dark Web", "wayback": "Wayback", "email": "Correo", "dorks": "Dorks", "phone": "Teléfono", "telegram": "Telegram", "map": "Mapa", "graph": "Grafo", "json": "JSON", "ai": "IA" },
+    "tabs": { "rdap": "RDAP", "github": "GitHub", "gravatar": "Gravatar", "hudsonrock": "Exposición a infostealers", "lunar": "Exposición del dominio", "findings": "Hallazgos", "whois": "WHOIS", "dns": "DNS", "subdomains": "Subdominios", "accounts": "Cuentas", "threats": "Amenazas", "censys": "Censys", "darkweb": "Dark Web", "wayback": "Wayback", "email": "Correo", "dorks": "Dorks", "phone": "Teléfono", "telegram": "Telegram", "map": "Mapa", "graph": "Grafo", "json": "JSON", "ai": "IA" },
     "opsec": {
       "scoreLabel": "Puntuación OPSEC", "riskSuffix": "RIESGO",
       "data_exposure": { "label": "Exposición de datos", "tooltip": "Fugas de datos sensibles: credenciales filtradas, correos expuestos, información personal pública." },
@@ -127,6 +142,7 @@
     "json": { "title": "Resultados JSON sin procesar", "show": "Mostrar datos sin procesar", "hide": "Ocultar datos sin procesar" },
     "ai": { "title": "Análisis OSINT con IA · Nvidia Nemotron", "chatTitle": "Preguntar a la IA", "generate": "Generar resumen con IA", "generating": "Generando análisis…", "model": "Modelo", "regenerate": "Regenerar", "placeholder": "Pregunte cualquier cosa sobre este escaneo…" },
     "duration": "Completado en {duration}",
+    "copyAllFindings": "Copiar todos los hallazgos",
     "copyAllEmails": "Copiar todos los correos",
     "emailsCopied": "¡Correos copiados!",
     "filterPlatforms": "Filtrar plataformas..."
@@ -271,5 +287,17 @@
     "failedToToggle": "Error al actualizar la lista"
   },
   "common": { "copy": "Copiar", "copied": "¡Copiado!", "copyFailed": "Error al copiar", "loading": "Cargando…", "error": "Error", "backToTop": "Volver arriba" },
-  "lang": { "label": "Idioma", "en": "EN", "ru": "RU", "de": "DE", "fr": "FR", "es": "ES", "pl": "PL" }
+  "lang": {
+    "label": "Idioma",
+    "en": "EN",
+    "ru": "RU",
+    "de": "DE",
+    "fr": "FR",
+    "es": "ES",
+    "it": "IT",
+    "pt": "PT",
+    "pl": "PL",
+    "zh": "ZH",
+    "tr": "TR"
+  }
 }

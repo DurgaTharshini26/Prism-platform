@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
-import { ExternalLink, Printer, Download, Shield, AlertTriangle, Globe, Server, Lock, User, Clock, Zap, Phone, MessageCircle, Map, GitBranch, Code, Brain, ChevronDown, ChevronUp, SendHorizontal, Mail, Copy, Eye, ShieldAlert, ArrowUp, FileSpreadsheet, FileText, Search, RefreshCw, Loader2, Github, UserCircle } from 'lucide-react';
+import { ExternalLink, Printer, Download, Shield, AlertTriangle, Globe, Server, Lock, User, Clock, Zap, Phone, MessageCircle, Map, GitBranch, Code, Brain, ChevronDown, ChevronUp, SendHorizontal, Mail, Copy, Eye, ShieldAlert, ArrowUp, FileSpreadsheet, FileText, Search, RefreshCw, Loader2, Github, UserCircle, TrendingUp } from 'lucide-react';
 import type { ScanResults, ScanMeta, OpsecFinding, ModuleStatus, ModuleStatusFields, ScanType } from '@/lib/types';
 import { fetchReportBlob, fetchGraphExport, generateAiSummary, sendAiChat, getMapData, getGraphData, startScan, getScan } from '@/lib/api';
 import { useTranslations } from '@/lib/i18n';
@@ -44,6 +44,8 @@ function loadLeaflet(): Promise<any> {
       const link = document.createElement('link');
       link.rel = 'stylesheet';
       link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+      link.integrity = 'sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=';
+      link.crossOrigin = 'anonymous';
       link.setAttribute('data-leaflet', '1');
       document.head.appendChild(link);
     }
@@ -55,6 +57,8 @@ function loadLeaflet(): Promise<any> {
     }
     const s = document.createElement('script');
     s.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+    s.integrity = 'sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=';
+    s.crossOrigin = 'anonymous';
     s.setAttribute('data-leaflet', '1');
     s.onload = () => resolve((window as any).L);
     s.onerror = () => reject(new Error('Failed to load Leaflet'));
@@ -433,6 +437,7 @@ const OPSEC_CATEGORY_INFO: Record<string, { label: string; tooltip: string }> = 
 const TABS = [
   { id: 'findings', label: 'Findings', icon: Shield },
   { id: 'whois', label: 'WHOIS', icon: Globe },
+  { id: 'rdap', label: 'RDAP', icon: Globe },
   { id: 'dns', label: 'DNS', icon: Server },
   { id: 'subdomains', label: 'Subdomains', icon: Lock },
   { id: 'accounts', label: 'Accounts', icon: User },
@@ -443,6 +448,8 @@ const TABS = [
   { id: 'wayback', label: 'Wayback', icon: Clock },
   { id: 'email', label: 'Email', icon: Mail },
   { id: 'gravatar', label: 'Gravatar', icon: UserCircle },
+  { id: 'hudsonrock', label: 'Infostealers', icon: ShieldAlert },
+  { id: 'lunar', label: 'Exposure', icon: TrendingUp },
   { id: 'dorks', label: 'Dorks', icon: Zap },
   { id: 'phone', label: 'Phone', icon: Phone },
   { id: 'telegram', label: 'Telegram', icon: MessageCircle },
@@ -701,11 +708,12 @@ export function ScanResults({ scan, onHome }: Props) {
         r.cert_transparency.subdomains.forEach(s => lines.push(`- ${s}`));
         lines.push('');
       }
-      if (r.blackbird?.some(b => b.status === 'found')) {
+      const found = Array.isArray(r.blackbird) ? r.blackbird.filter(b => b.status === 'found') : [];
+      if (found.length) {
         lines.push('## Accounts Found');
         lines.push('| Platform | URL |');
         lines.push('|----------|-----|');
-        r.blackbird.filter(b => b.status === 'found').forEach(b => lines.push(`| ${b.site} | ${b.url} |`));
+        found.forEach(b => lines.push(`| ${b.site} | ${b.url} |`));
         lines.push('');
       }
       const md = lines.join('\n');
@@ -778,6 +786,8 @@ export function ScanResults({ scan, onHome }: Props) {
 
   const [accountFilter, setAccountFilter] = useState('');
 
+  const accounts = Array.isArray(r.blackbird) ? r.blackbird : [];
+
   const skippedIpProviders = [
     { name: 'Shodan', mod: r.shodan, key: 'SHODAN_API_KEY' },
     { name: 'VirusTotal', mod: r.virustotal, key: 'VIRUSTOTAL_API_KEY' },
@@ -789,9 +799,10 @@ export function ScanResults({ scan, onHome }: Props) {
 
   const visibleTabs = TABS.filter(t => {
     if (t.id === 'whois') return r.whois && !r.whois.error;
+    if (t.id === 'rdap') return r.rdap && !r.rdap.error;
     if (t.id === 'dns') return r.dns?.records && Object.keys(r.dns.records).length > 0;
     if (t.id === 'subdomains') return r.cert_transparency?.subdomains?.length;
-    if (t.id === 'accounts') return r.blackbird?.some(b => b.status === 'found');
+    if (t.id === 'accounts') return accounts.some(b => b.status === 'found');
     if (t.id === 'github') return r.github && modStatus(r.github) === 'ok';
     if (t.id === 'threats') return [r.virustotal, r.abuseipdb, r.shodan].some(m => m && modStatus(m) !== 'error');
     if (t.id === 'censys') return r.censys && modStatus(r.censys) === 'ok';
@@ -799,6 +810,8 @@ export function ScanResults({ scan, onHome }: Props) {
     if (t.id === 'wayback') return r.wayback;
     if (t.id === 'email') return r.emailrep || r.smtp || r.breaches || r.gravatar;
     if (t.id === 'gravatar') return r.gravatar && modStatus(r.gravatar) === 'ok';
+    if (t.id === 'hudsonrock') return r.hudsonrock && modStatus(r.hudsonrock) === 'ok';
+    if (t.id === 'lunar') return r.lunar && modStatus(r.lunar) === 'ok';
     if (t.id === 'dorks') return r.dorks?.length;
     if (t.id === 'phone') return r.phone;
     if (t.id === 'telegram') return r.telegram;
@@ -946,7 +959,24 @@ export function ScanResults({ scan, onHome }: Props) {
         {tab === 'findings' && (
           <div>
             {opsec?.all_findings?.length ? (
-              <Card title="Security Findings">
+              <Card
+                title="Security Findings"
+                extra={
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const messages = opsec.all_findings.map(f => f.message).join('\n');
+                      copyValue(messages);
+                    }}
+                    className="text-[10px] font-medium text-text-3 hover:text-text-1 transition-colors px-2 py-0.5 rounded hover:bg-surface-2 flex items-center gap-1"
+                    title={i18n('results.copyAllFindings') !== 'results.copyAllFindings' ? i18n('results.copyAllFindings') : 'Copy all findings'}
+                    aria-label={i18n('results.copyAllFindings') !== 'results.copyAllFindings' ? i18n('results.copyAllFindings') : 'Copy all findings'}
+                  >
+                    <Copy size={11} />
+                    {i18n('results.copyAllFindings') !== 'results.copyAllFindings' ? i18n('results.copyAllFindings') : 'Copy all findings'}
+                  </button>
+                }
+              >
                 {opsec.all_findings.map((f, i) => <FindingRow key={i} f={f} />)}
               </Card>
             ) : (
@@ -985,6 +1015,47 @@ export function ScanResults({ scan, onHome }: Props) {
                       </span>
                     ))}
                   </div>
+                </div>
+              )}
+            </div>
+          </Card>
+        )}
+
+        {/* RDAP */}
+        {tab === 'rdap' && r.rdap && !r.rdap.error && (
+          <Card title="RDAP Registration" onRefresh={() => refreshModule('rdap')} refreshing={isRefreshing('rdap')}>
+            <div className="space-y-1.5">
+              {r.rdap.registered === false && (
+                <div className="text-text-3 text-sm py-2">Domain is not registered</div>
+              )}
+              {r.rdap.registrar && (
+                <div className="dt-row"><span className="dt-label">Registrar</span><span className="dt-value">{r.rdap.registrar}</span></div>
+              )}
+              {r.rdap.created && (
+                <div className="dt-row"><span className="dt-label">Created</span><span className="dt-value">{r.rdap.created}</span></div>
+              )}
+              {r.rdap.expires && (
+                <div className="dt-row"><span className="dt-label">Expires</span><span className="dt-value">{r.rdap.expires}</span></div>
+              )}
+              {r.rdap.updated && (
+                <div className="dt-row"><span className="dt-label">Updated</span><span className="dt-value">{r.rdap.updated}</span></div>
+              )}
+              {r.rdap.nameservers && r.rdap.nameservers.length > 0 && (
+                <div className="dt-row"><span className="dt-label">Name Servers</span>
+                  <div className="flex flex-wrap gap-1">
+                    {r.rdap.nameservers.slice(0, 4).map(ns => (
+                      <span key={ns} className="tag">{ns}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {r.rdap.registrant && (
+                <div className="mt-2 p-2 bg-surface-2 rounded">
+                  <div className="text-[10px] text-text-3 uppercase tracking-wider mb-1">Registrant</div>
+                  {r.rdap.registrant.name && <div className="text-sm">{r.rdap.registrant.name}</div>}
+                  {r.rdap.registrant.organization && <div className="text-xs text-text-2">{r.rdap.registrant.organization}</div>}
+                  {r.rdap.registrant.email && <div className="text-xs text-text-2">{r.rdap.registrant.email}</div>}
+                  {r.rdap.registrant.country && <div className="text-xs text-text-2">{r.rdap.registrant.country}</div>}
                 </div>
               )}
             </div>
@@ -1053,7 +1124,7 @@ export function ScanResults({ scan, onHome }: Props) {
               <thead><tr className="text-left text-text-3 text-[10px] uppercase tracking-wider border-b border-border-1">
                 <th className="pb-2">Platform</th><th className="pb-2">URL</th><th className="pb-2 text-right">Time</th>
               </tr></thead>
-              <tbody>{r.blackbird?.filter(b => b.status === 'found' && (!accountFilter || b.site.toLowerCase().includes(accountFilter.toLowerCase()))).map(b => (
+              <tbody>{accounts.filter(b => b.status === 'found' && (!accountFilter || b.site.toLowerCase().includes(accountFilter.toLowerCase()))).map(b => (
                 <tr key={b.site} className="border-b border-border-1 last:border-0">
                   <td className="py-2 font-medium text-text-1">{b.site}</td>
                   <td className="py-2">
@@ -1067,7 +1138,7 @@ export function ScanResults({ scan, onHome }: Props) {
               ))}</tbody>
             </table>
             </div>
-            {(r.blackbird?.filter(b => b.status === 'found' && (!accountFilter || b.site.toLowerCase().includes(accountFilter.toLowerCase())))?.length === 0) && (
+            {(accounts.filter(b => b.status === 'found' && (!accountFilter || b.site.toLowerCase().includes(accountFilter.toLowerCase()))).length === 0) && (
               <div className="flex flex-col items-center justify-center py-10 text-center">
                 <User size={24} className="text-text-3 opacity-40 mb-2" />
                 <div className="text-text-3 text-sm">
@@ -1164,6 +1235,11 @@ export function ScanResults({ scan, onHome }: Props) {
               )}
             </KeyModuleCard>
             <KeyModuleCard title="Shodan" mod={r.shodan} onRefresh={() => refreshModule('shodan')} refreshing={isRefreshing('shodan')}>
+              {r.shodan?.source === 'internetdb' && (
+                <div className="text-[11px] text-text-3 leading-relaxed mb-3 pb-2 border-b border-border-1">
+                  {"Ports, hostnames and CVEs below come from InternetDB, Shodan's free dataset. It carries no organisation, location or service banners — a paid Shodan key fills those in."}
+                </div>
+              )}
               {r.shodan?.open_ports?.length ? (
                 <div className="mb-3">
                   <div className="text-[10px] text-text-3 uppercase tracking-wider mb-2">Open Ports</div>
@@ -1455,6 +1531,160 @@ export function ScanResults({ scan, onHome }: Props) {
           </KeyModuleCard>
         )}
 
+        {tab === 'hudsonrock' && (
+          <KeyModuleCard
+            title="Infostealer Exposure"
+            mod={r.hudsonrock}
+            onRefresh={() => refreshModule('hudsonrock')}
+            refreshing={isRefreshing('hudsonrock')}
+          >
+            <div className="space-y-3">
+              <div className="text-[11px] text-text-3 leading-relaxed pb-2 border-b border-border-1">
+                Credentials found on machines infected by infostealer malware. This is separate
+                from breach data: a breach comes from a compromised service, these records come
+                from infected endpoints. Queries are sent to Hudson Rock.
+              </div>
+
+              {r.hudsonrock?.target_type === 'domain' ? (
+                <>
+                  <div className="space-y-1.5">
+                    <DtRow label="Total compromised" value={r.hudsonrock?.total_compromised} />
+                    <DtRow label="Employees" value={r.hudsonrock?.employees} />
+                    <DtRow label="Users" value={r.hudsonrock?.users} />
+                    <DtRow label="Third parties" value={r.hudsonrock?.third_parties} />
+                  </div>
+
+                  {(r.hudsonrock?.employee_urls?.length ?? 0) > 0 && (
+                    <div>
+                      <div className="text-[11px] font-semibold text-text-3 uppercase tracking-wider mb-1.5">
+                        Most affected employee URLs
+                      </div>
+                      <div className="space-y-1.5">
+                        {r.hudsonrock?.employee_urls?.map(entry => (
+                          <div key={entry.url} className="dt-row">
+                            <span className="dt-label break-all">{entry.url}</span>
+                            <span>{entry.occurrence}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {Object.keys(r.hudsonrock?.stealer_families ?? {}).length > 0 && (
+                    <div>
+                      <div className="text-[11px] font-semibold text-text-3 uppercase tracking-wider mb-1.5">
+                        Stealer families
+                      </div>
+                      <div className="space-y-1.5">
+                        {Object.entries(r.hudsonrock?.stealer_families ?? {}).map(([name, count]) => (
+                          <div key={name} className="dt-row">
+                            <span className="dt-label">{name}</span>
+                            <span>{count}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {r.hudsonrock?.employee_password_stats && (
+                    <div>
+                      <div className="text-[11px] font-semibold text-text-3 uppercase tracking-wider mb-1.5">
+                        Employee password strength
+                      </div>
+                      <div className="space-y-1.5">
+                        <DtRow label="Passwords analysed" value={r.hudsonrock.employee_password_stats.total} />
+                        <DtRow label="Too weak %" value={r.hudsonrock.employee_password_stats.too_weak} />
+                        <DtRow label="Weak %" value={r.hudsonrock.employee_password_stats.weak} />
+                        <DtRow label="Strong %" value={r.hudsonrock.employee_password_stats.strong} />
+                      </div>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="space-y-1.5">
+                  <DtRow label="Records found" value={r.hudsonrock?.stealers_found} />
+                  <DtRow label="Corporate services" value={r.hudsonrock?.corporate_services} />
+                  <DtRow label="User services" value={r.hudsonrock?.user_services} />
+                </div>
+              )}
+            </div>
+          </KeyModuleCard>
+        )}
+
+        {tab === 'lunar' && (
+          <KeyModuleCard
+            title="Domain Exposure"
+            mod={r.lunar}
+            onRefresh={() => refreshModule('lunar')}
+            refreshing={isRefreshing('lunar')}
+          >
+            <div className="space-y-3">
+              <div className="text-[11px] text-text-3 leading-relaxed pb-2 border-b border-border-1">
+                {"Aggregate counts of how often this domain appears in infostealer logs and breach data over a rolling year, split between staff and customers. Queries are sent to Lunar."}
+              </div>
+
+              <div className="space-y-1.5">
+                <DtRow label="Period" value={r.lunar?.period?.from ? `${r.lunar.period.from} to ${r.lunar.period.to}` : null} />
+                <DtRow label="Total events" value={r.lunar?.total_events} />
+                <DtRow label="Infostealer events" value={r.lunar?.infostealer_events} />
+                <DtRow label="Data breach events" value={r.lunar?.data_breach_events} />
+                <DtRow label="Employee events" value={r.lunar?.employee_events} />
+                <DtRow label="Client events" value={r.lunar?.client_events} />
+                <DtRow label="First seen" value={r.lunar?.first_seen} />
+                <DtRow label="Last seen" value={r.lunar?.last_seen} />
+              </div>
+
+              {(r.lunar?.malware_families?.length ?? 0) > 0 && (
+                <div>
+                  <div className="text-[11px] font-semibold text-text-3 uppercase tracking-wider mb-1.5">
+                    Malware families
+                  </div>
+                  <div className="space-y-1.5">
+                    {r.lunar?.malware_families?.map(entry => (
+                      <div key={entry.family} className="dt-row">
+                        <span className="dt-label">{entry.family}</span>
+                        <span>{entry.events}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {(r.lunar?.services?.length ?? 0) > 0 && (
+                <div>
+                  <div className="text-[11px] font-semibold text-text-3 uppercase tracking-wider mb-1.5">
+                    Affected services
+                  </div>
+                  <div className="space-y-1.5">
+                    {r.lunar?.services?.map(entry => (
+                      <div key={entry.service} className="dt-row">
+                        <span className="dt-label">{entry.service}</span>
+                        <span>{entry.events}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {(r.lunar?.countries?.length ?? 0) > 0 && (
+                <div>
+                  <div className="text-[11px] font-semibold text-text-3 uppercase tracking-wider mb-1.5">
+                    Countries
+                  </div>
+                  <div className="space-y-1.5">
+                    {r.lunar?.countries?.map(entry => (
+                      <div key={entry.country} className="dt-row">
+                        <span className="dt-label">{entry.country}</span>
+                        <span>{entry.events}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </KeyModuleCard>
+        )}
+
         {tab === 'dorks' && r.dorks && (
           <Card title="Google Dorks">
             {r.dorks.length === 0 ? (
@@ -1568,8 +1798,17 @@ export function ScanResults({ scan, onHome }: Props) {
         {tab === 'ai' && (
           <div>
             <Card title="AI OSINT Analysis · Nvidia Nemotron">
+              <div className="flex gap-2.5 rounded-card border border-yellow/40 bg-yellow/10 p-3 mb-3">
+                <AlertTriangle size={15} className="text-yellow shrink-0 mt-px" />
+                <div className="text-[12px] text-text-1 leading-relaxed">
+                  <div className="font-semibold mb-1">AI analysis may take a while on this demo</div>
+                  <div className="text-text-2">
+                    {"The demo server sits in a region every hosted LLM provider blocks, so the request is routed out through a proxy before it reaches a model. It works, it is just slow, so give the summary up to a minute or two. Self-host PRISM with your own provider and it responds at normal speed."}
+                  </div>
+                </div>
+              </div>
               <div className="text-[11px] text-text-3 leading-relaxed mb-3 pb-3 border-b border-border-1">
-                {"AI-generated and may be inaccurate or incomplete - treat it as a lead, not a verified finding. Generating a summary sends this scan's data to the configured LLM provider (OpenRouter / Groq). Disable the AI module if you don't want that."}
+                {"AI-generated and may be inaccurate or incomplete - treat it as a lead, not a verified finding. Generating a summary sends this scan's data to the configured LLM provider. Disable the AI module if you don't want that."}
               </div>
               {!aiSummary && !aiLoading && (
                 <button onClick={runAi} className="btn-primary w-full">
@@ -1586,7 +1825,7 @@ export function ScanResults({ scan, onHome }: Props) {
                 <div className="text-sm">
                   <div className="text-red">{aiError}</div>
                   <div className="text-[11px] text-text-3 leading-relaxed mt-2">
-                    {"On this public demo the LLM provider is often unreachable: OpenRouter and Groq reject requests coming from the demo server's hosting region at their Cloudflare edge, so the call never reaches the model. Self-host PRISM and point LLM_BASE_URL / LLM_API_KEY (or LLM_PROXY) at your own provider in .env, and this panel works normally."}
+                    {"The AI runs through a proxy on this demo and can be slow. If it timed out, try Generate again. Every provider PRISM tried is named in the error."}
                   </div>
                 </div>
               )}
@@ -1603,6 +1842,12 @@ export function ScanResults({ scan, onHome }: Props) {
             </Card>
 
             <Card title="Ask the AI">
+              <div className="flex gap-2.5 rounded-card border border-yellow/40 bg-yellow/10 p-3 mb-3">
+                <AlertTriangle size={15} className="text-yellow shrink-0 mt-px" />
+                <div className="text-[12px] text-text-2 leading-relaxed">
+                  {"Same as above — the chat cannot reach a model on this demo. It works on a self-hosted instance with your own provider configured."}
+                </div>
+              </div>
               {chatHistory.length > 0 && (
                 <div className="space-y-3 mb-4 max-h-72 overflow-y-auto pr-1">
                   {chatHistory.map((m, i) => (

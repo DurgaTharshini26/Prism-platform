@@ -1,4 +1,16 @@
 {
+  "shortcuts": {
+    "title": "Tastenkürzel",
+    "close": "Schließen",
+    "groupNavigation": "Navigation",
+    "groupAppearance": "Darstellung",
+    "groupResults": "Ergebnisse",
+    "focusSearch": "Zum Suchfeld springen",
+    "showShortcuts": "Dieses Fenster anzeigen",
+    "toggleTheme": "Helles oder dunkles Design",
+    "prevTab": "Vorheriger Ergebnis-Tab",
+    "nextTab": "Nächster Ergebnis-Tab"
+  },
   "topbar": {
     "tagline": "Open-Source-Aufklärung",
     "scanning": "Scan läuft",
@@ -30,6 +42,7 @@
 "username": "Nutzer"
     },
     "modules": {
+      "rdap": "RDAP",
       "whois": "WHOIS",
       "dns": "DNS",
       "geoip": "GeoIP",
@@ -45,6 +58,8 @@
       "smtp": "SMTP-Prüfung",
       "leaks": "Leak-Check",
       "gravatar": "Gravatar",
+      "hudsonrock": "Infostealer-Exposition",
+      "lunar": "Domain-Exposition",
       "hlr": "Telefon-Suche",
       "blackbird": "Blackbird",
       "maigret": "Maigret",
@@ -95,7 +110,7 @@
       "line2Prefix": "Für vollen Zugriff",
       "selfHost": "PRISM selbst hosten",
       "line2Suffix": "mit eigenen API-Schlüsseln.",
-      "line3": "Module, die auf Dienste von Drittanbietern angewiesen sind (crt.sh, Wayback Machine), können 5xx-Fehler liefern, wenn diese ausfallen oder drosseln. Die KI-Analyse ist in dieser Demo eventuell nicht verfügbar: OpenRouter und Groq blockieren Anfragen aus der Hosting-Region der Demo an ihrem Cloudflare-Edge. Beim Self-Hosting funktioniert beides normal."
+      "line3": "Module, die auf Dienste von Drittanbietern angewiesen sind (crt.sh, Wayback Machine), können 5xx-Fehler liefern, wenn diese ausfallen oder drosseln. Die KI-Analyse funktioniert in dieser Demo, kann aber langsam sein: OpenRouter und Groq blockieren die Hosting-Region der Demo, deshalb laufen die Anfragen über einen Proxy. Beim Self-Hosting funktioniert beides normal und die KI antwortet in voller Geschwindigkeit."
     }
   },
   "toolPanels": {
@@ -221,6 +236,11 @@
     "copyCurl": "Als cURL kopieren",
     "scanAnother": "Neuer Scan",
     "tabs": {
+      "rdap": "RDAP",
+      "github": "GitHub",
+      "gravatar": "Gravatar",
+      "hudsonrock": "Infostealer-Exposition",
+      "lunar": "Domain-Exposition",
       "findings": "Befunde",
       "whois": "WHOIS",
       "dns": "DNS",
@@ -270,6 +290,7 @@
     "json": { "title": "Rohe JSON-Daten", "show": "Rohdaten anzeigen", "hide": "Rohdaten verbergen" },
     "ai": { "title": "KI-OSINT-Analyse · Nvidia Nemotron", "chatTitle": "Frag die KI", "generate": "KI-Zusammenfassung erstellen", "generating": "Analyse wird erstellt…", "model": "Modell", "regenerate": "Neu generieren", "placeholder": "Frag etwas zu diesem Scan…" },
     "duration": "Abgeschlossen in {duration}",
+    "copyAllFindings": "Alle Funde kopieren",
     "copyAllEmails": "Alle E-Mails kopieren",
     "emailsCopied": "E-Mails kopiert!",
     "filterPlatforms": "Plattformen filtern..."
@@ -320,6 +341,10 @@
     "de": "DE",
     "fr": "FR",
     "es": "ES",
-    "pl": "PL"
+    "it": "IT",
+    "pt": "PT",
+    "pl": "PL",
+    "zh": "ZH",
+    "tr": "TR"
   }
 }
