@@ -235,12 +235,13 @@ REPORT_TEMPLATE = r"""<!DOCTYPE html>
 <div class="score-banner">
   <div class="score-left">
     <div>
-      <div class="score-num" style="color:{{ opsec_circle_color }}">{{ opsec.score }}</div>
+      <div class="score-num" style="color:{{ opsec_circle_color }}">{{ 'N/A' if opsec.score is none else opsec.score }}</div>
       <div class="score-sub">/ 100 OPSEC</div>
-      <div class="score-risk" style="color:{{ opsec_circle_color }}">{{ t('opsec.risk', level=opsec.risk_level) }}</div>
+      <div class="score-risk" style="color:{{ opsec_circle_color }}">{{ t('opsec.not_assessed') if opsec.score is none else t('opsec.risk', level=opsec.risk_level) }}</div>
     </div>
   </div>
   <div class="score-bars">
+    {% if opsec.score is none %}<div class="finding-meta">{{ opsec.reason }}</div>{% endif %}
     {% for key, cat in opsec.categories.items() %}
     <div class="cat-row">
       <div class="cat-name">{{ t('opsec.cat.' + key) }}</div>
@@ -546,7 +547,9 @@ def _bar_color(pct: int) -> str:
     return "#f85149"
 
 
-def _opsec_circle_color(score: int) -> str:
+def _opsec_circle_color(score: Optional[int]) -> str:
+    if score is None:
+        return "#636e72"
     if score >= 71:
         return "#3fb950"
     if score >= 51:
@@ -691,11 +694,12 @@ PDF_REPORT_TEMPLATE = r"""<!DOCTYPE html>
 <div class="score-box">
   <table><tr>
     <td style="width: 90pt; vertical-align: middle;">
-      <div class="score-num">{{ opsec.score }}</div>
-      <div class="score-risk">{{ t('opsec.risk', level=opsec.risk_level) }}</div>
+      <div class="score-num">{{ 'N/A' if opsec.score is none else opsec.score }}</div>
+      <div class="score-risk">{{ t('opsec.not_assessed') if opsec.score is none else t('opsec.risk', level=opsec.risk_level) }}</div>
       <div class="muted">{{ t('opsec.score') }}</div>
     </td>
     <td style="vertical-align: middle;">
+      {% if opsec.score is none %}<div class="muted">{{ opsec.reason }}</div>{% else %}
       <table>
         {% for key, cat in opsec.categories.items() %}
         <tr>
@@ -709,6 +713,7 @@ PDF_REPORT_TEMPLATE = r"""<!DOCTYPE html>
         </tr>
         {% endfor %}
       </table>
+      {% endif %}
     </td>
   </tr></table>
 </div>

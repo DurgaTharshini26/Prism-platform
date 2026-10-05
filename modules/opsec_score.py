@@ -2,6 +2,7 @@ from typing import Dict, Any, List
 import sys
 sys.path.append('..')
 from config import Colors
+from modules.module_status import classify, OK
 
 RISK_LEVELS = {
     (0, 30): ("CRITICAL", Colors.RED),
@@ -275,6 +276,10 @@ class OpsecScorer:
         print(f"{Colors.BOLD}OPSEC Security Score{Colors.RESET}")
         print(f"{Colors.CYAN}{'='*60}{Colors.RESET}")
 
+        if score is None:
+            print(f"\n  {Colors.YELLOW}Not assessed: {result['reason']}{Colors.RESET}")
+            return
+
         bar_filled = int(score / 5)
         bar = "█" * bar_filled + "░" * (20 - bar_filled)
         print(f"\n  Score: {risk_color}{score}/100  [{bar}]  {risk}{Colors.RESET}\n")
@@ -310,6 +315,15 @@ class OpsecScorer:
 
 
 def score_from_results(all_results: Dict[str, Any]) -> Dict[str, Any]:
+    if not any(r and classify(r) == OK for r in all_results.values()):
+        return {
+            "score": None,
+            "risk_level": "NOT_ASSESSED",
+            "reason": "No module returned usable data (all failed, were skipped, or none applied to this target)",
+            "categories": {},
+            "all_findings": [],
+        }
+
     scorer = OpsecScorer()
 
     if "breaches" in all_results:

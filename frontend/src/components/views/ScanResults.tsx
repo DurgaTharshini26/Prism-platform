@@ -289,7 +289,7 @@ function GraphView({ scanId }: { scanId: string }) {
 }
 
 const RISK_COLOR: Record<string, string> = {
-  CRITICAL: '#f85149', HIGH: '#f85149', MEDIUM: '#d29922', LOW: '#3fb950', MINIMAL: '#3fb950'
+  CRITICAL: '#f85149', HIGH: '#f85149', MEDIUM: '#d29922', LOW: '#3fb950', MINIMAL: '#3fb950', NOT_ASSESSED: '#636e72'
 };
 
 function DtRow({ label, value }: { label: string; value?: string | number | null }) {
@@ -708,7 +708,7 @@ export function ScanResults({ scan, onHome }: Props) {
       if (scan.completed_at) lines.push(`**Completed:** ${scan.completed_at.slice(0, 19).replace('T', ' ')}`);
       lines.push('');
       if (opsec) {
-        lines.push(`## OPSEC Score: ${opsec.score}/100 (${opsec.risk_level})`);
+        lines.push(opsec.score === null ? `## OPSEC Score: not assessed (${opsec.reason ?? ''})` : `## OPSEC Score: ${opsec.score}/100 (${opsec.risk_level})`);
         for (const [k, cat] of Object.entries(opsec.categories)) {
           lines.push(`- **${k.replace(/_/g, ' ')}:** ${cat.score}/${cat.max} (${cat.percent}%)`);
         }
@@ -952,12 +952,12 @@ export function ScanResults({ scan, onHome }: Props) {
         <div className="px-4 sm:px-5 py-2.5 bg-surface-2 border-b border-border-1 flex items-center gap-4 sm:gap-6 overflow-x-auto scrollbar-hide">
           <div className="flex items-center gap-3">
             <div className="text-3xl font-black" style={{ color: RISK_COLOR[opsec.risk_level] }}>
-              {opsec.score}
+              {opsec.score ?? 'N/A'}
             </div>
-            <div>
+            <div title={opsec.reason}>
               <div className="text-[10px] text-text-3">OPSEC Score</div>
               <div className="text-[11px] font-bold" style={{ color: RISK_COLOR[opsec.risk_level] }}>
-                {opsec.risk_level} RISK
+                {opsec.risk_level === 'NOT_ASSESSED' ? 'NOT ASSESSED' : `${opsec.risk_level} RISK`}
               </div>
             </div>
           </div>

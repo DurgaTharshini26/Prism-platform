@@ -7,7 +7,7 @@ from modules.opsec_score import OpsecScorer, score_from_results, RISK_LEVELS
 
 class TestScoreFromResults:
     def test_clean_target_scores_high(self):
-        result = score_from_results({})
+        result = score_from_results({"smtp": {"exists": False}})
         assert 86 <= result["score"] <= 100
         assert result["risk_level"] == "MINIMAL"
 
@@ -115,8 +115,8 @@ class TestScoreFromResults:
             "shodan": {},
             "website": {},
         })
-        assert result["score"] == 100
-        assert result["risk_level"] == "MINIMAL"
+        assert result["score"] is None
+        assert result["risk_level"] == "NOT_ASSESSED"
 
     def test_error_results_skipped(self):
         result = score_from_results({
@@ -128,7 +128,8 @@ class TestScoreFromResults:
             "website": {"error": "connection refused"},
             "wayback": {"error": "404"},
         })
-        assert result["score"] == 100
+        assert result["score"] is None
+        assert result["risk_level"] == "NOT_ASSESSED"
 
     def test_category_never_below_zero(self):
         result = score_from_results({
@@ -153,7 +154,7 @@ class TestScoreFromResults:
         assert result["score"] >= 0
 
     @pytest.mark.parametrize("deductions,expected_band", [
-        ({}, "MINIMAL"),
+        ({"smtp": {"exists": False}}, "MINIMAL"),
         ({"breaches": {"breach_count": 5}}, "LOW"),     # ~85 → LOW (71-85)
         ({"breaches": {"breach_count": 5}, "smtp": {"exists": True},
           "whois": {"emails": ["a@b.com"]}}, None),     # just check in-range
@@ -189,3 +190,31 @@ class TestScoreFromResults:
         severities = [f["severity"] for f in result["all_findings"]]
         order = {"CRITICAL": 0, "HIGH": 1, "MEDIUM": 2, "LOW": 3, "INFO": 4}
         assert severities == sorted(severities, key=lambda s: order.get(s, 5))
+
+class TestNotAssessed:
+    def test_no_results(self):
+        result = score_from_results({})
+        assert result["score"] is None
+        assert result["risk_level"] == "NOT_ASSESSED"
+        assert result["reason"]
+        assert result["categories"] == {}
+        assert result["all_findings"] == []
+
+    @pytest.mark.parametrize("failed", [
+        {"status": "error", "error": "proxy down"},
+        {"status": "skipped", "error": None},
+        {"status": "rate_limited", "error": None},
+    ])
+    def test_only_unsuccessful_modules(self, failed):
+        result = score_from_results({"whois": dict(failed), "dns": dict(failed), "blackbird": []})
+        assert result["score"] is None
+        assert result["risk_level"] == "NOT_ASSESSED"
+
+    def test_one_successful_module_is_scored(self):
+        result = score_from_results({"whois": {"error": "timeout"}, "smtp": {"exists": False}})
+        assert result["score"] == 100
+        assert result["risk_level"] == "MINIMAL"
+
+    def test_print_report_not_assessed(self, capsys):
+        OpsecScorer().print_report(score_from_results({}))
+        assert "Not assessed" in capsys.readouterr().out

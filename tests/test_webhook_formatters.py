@@ -304,3 +304,20 @@ class TestDiscordFormatter:
         findings_fields = [f for f in fields if f["name"] == "Notable Findings"]
         assert len(findings_fields) == 0
 
+
+
+class TestNotAssessedOpsec:
+    payload = {
+        "target": "example.com",
+        "scan_type": "domain",
+        "status": "completed",
+        "results": {"opsec_score": {"score": None, "risk_level": "NOT_ASSESSED"}},
+    }
+
+    def test_slack(self):
+        assert "not assessed" in str(format_slack(self.payload)).lower()
+
+    def test_discord(self):
+        embed = format_discord(self.payload)["embeds"][0]
+        assert embed["color"] == 0x5865F2
+        assert {"name": "OPSEC Score", "value": "Not assessed", "inline": True} in embed["fields"]

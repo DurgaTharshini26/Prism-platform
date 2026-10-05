@@ -15,6 +15,8 @@ def format_slack(payload: dict) -> dict:
         score = opsec.get("score", "?")
         risk = opsec.get("risk_level", "?")
         score_text = f"*OPSEC Score:* {score}/100 ({risk})"
+        if risk == "NOT_ASSESSED":
+            score_text = "*OPSEC Score:* not assessed"
 
     findings = []
     if results.get("virustotal", {}).get("malicious", 0) > 0:
@@ -79,7 +81,7 @@ def format_discord(payload: dict) -> dict:
 
     if status != "completed":
         color = 0xFF0000
-    elif opsec and isinstance(opsec, dict):
+    elif opsec and isinstance(opsec, dict) and opsec.get("risk_level") != "NOT_ASSESSED":
         score = opsec.get("score", 100)
         if score <= 30:
             color = 0xFF0000
@@ -99,7 +101,8 @@ def format_discord(payload: dict) -> dict:
     if opsec and isinstance(opsec, dict):
         fields.append({
             "name": "OPSEC Score",
-            "value": f"{opsec.get('score', '?')}/100 ({opsec.get('risk_level', '?')})",
+            "value": "Not assessed" if opsec.get("risk_level") == "NOT_ASSESSED"
+            else f"{opsec.get('score', '?')}/100 ({opsec.get('risk_level', '?')})",
             "inline": True,
         })
 

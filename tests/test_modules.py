@@ -371,3 +371,15 @@ class TestWebsiteAnalyzer:
         assert "GitHub" in platforms
         assert "Twitter/X" in platforms
         assert "LinkedIn" in platforms
+
+
+class TestReportNotAssessed:
+    def test_html_report_not_assessed(self, tmp_path):
+        from modules.opsec_score import score_from_results
+        from modules.report_generator import generate_html_report
+        opsec = score_from_results({})
+        path = generate_html_report("example.com", "domain", {}, opsec, str(tmp_path / "r.html"))
+        with open(path, encoding="utf-8") as f:
+            content = f.read()
+        assert "NOT ASSESSED" in content
+        assert "None" not in content.split("score-num")[1].split("</div>")[0]

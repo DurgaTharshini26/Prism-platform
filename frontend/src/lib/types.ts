@@ -38,8 +38,9 @@ export interface OpsecFinding {
 }
 
 export interface OpsecScore {
-  score: number;
-  risk_level: 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW' | 'MINIMAL';
+  score: number | null;
+  risk_level: 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW' | 'MINIMAL' | 'NOT_ASSESSED';
+  reason?: string;
   categories: Record<string, OpsecCategory>;
   all_findings: OpsecFinding[];
 }
