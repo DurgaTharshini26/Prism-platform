@@ -245,6 +245,7 @@
       "dmarc": "DMARC",
       "origin": "Pochodzenie",
       "rdns": "rDNS",
+      "ip": "IP",
       "city": "Miasto",
       "country": "Kraj",
       "org": "Organizacja",
@@ -265,6 +266,18 @@
       "decode": "Zdekoduj",
       "output": "Wynik",
       "invalid": "Nieprawidłowe dane wejściowe dla wybranego trybu."
+    },
+    "subnet": {
+      "calculate": "Oblicz",
+      "networkAddress": "Adres sieci",
+      "subnetMask": "Maska podsieci",
+      "wildcardMask": "Maska odwrotna",
+      "broadcastAddress": "Adres rozgłoszeniowy",
+      "firstUsableIp": "Pierwszy użyteczny IP",
+      "lastUsableIp": "Ostatni użyteczny IP",
+      "usableHosts": "Użyteczne hosty",
+      "totalAddresses": "Łączna liczba adresów",
+      "ipType": "Typ IP"
     },
     "jwt": {
       "title": "Dekoder JWT",
