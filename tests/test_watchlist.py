@@ -104,3 +104,31 @@ def test_due_watchlists_skips_paused(wl):
     due_ids = {e["id"] for e in wl.due_watchlists()}
     assert entry["id"] not in due_ids
     assert other["id"] in due_ids
+
+
+class TestWatchlistIdValidation:
+    @pytest.mark.parametrize(
+        ("method", "path", "kwargs"),
+        [
+            ("get", "/api/watchlist/not-a-uuid/alerts", {}),
+            ("delete", "/api/watchlist/not-a-uuid", {}),
+            ("patch", "/api/watchlist/not-a-uuid", {"json": {"paused": True}}),
+        ],
+    )
+    def test_rejects_invalid_watchlist_id_with_404(
+        self, monkeypatch, method, path, kwargs
+    ):
+        from web import app as app_mod
+        from web import security
+        from fastapi.testclient import TestClient
+
+        monkeypatch.setattr(security, "_API_KEYS", ["test-key"])
+
+        client = TestClient(app_mod.app, raise_server_exceptions=True)
+        resp = getattr(client, method)(
+            path,
+            headers={"X-API-Key": "test-key"},
+            **kwargs,
+        )
+
+        assert resp.status_code == 404
