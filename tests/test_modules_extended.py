@@ -463,6 +463,180 @@ class TestLeakLookup:
         assert "is_compromised" in result
         assert result["is_compromised"] is False
 
+class TestShodanHostStatus:
+    def _lookup(self):
+        from modules.shodan_lookup import ShodanLookup
+        sh = ShodanLookup()
+        sh.api_key = "fakekey"
+        return sh
+
+    def test_host_info_404_is_ok_with_empty_data(self, monkeypatch):
+        import requests
+        from modules.module_status import classify, OK
+
+        class MockResp:
+            status_code = 404
+
+        monkeypatch.setattr(requests, "get", lambda *a, **k: MockResp())
+        result = self._lookup().host_info("192.0.2.1")
+        assert classify(result) == OK
+        assert result["status"] == OK
+        assert result["error"] is None
+        assert result["status_reason"] == "No information available for this IP in Shodan"
+        assert result["open_ports"] == []
+        assert result["services"] == []
+        assert result["vulns"] == []
+
+    def test_host_info_unexpected_status_is_error(self, monkeypatch):
+        import requests
+        from modules.module_status import classify, ERROR
+
+        class MockResp:
+            status_code = 500
+
+        monkeypatch.setattr(requests, "get", lambda *a, **k: MockResp())
+        result = self._lookup().host_info("192.0.2.1")
+        assert classify(result) == ERROR
+        assert result["status"] == ERROR
+        assert result["error"] == "Shodan API returned 500"
+        assert result["status_reason"] == "Shodan API returned 500"
+
+    def test_host_info_exception_is_error(self, monkeypatch):
+        import requests
+        from modules.module_status import classify, ERROR
+
+        def _boom(*a, **k):
+            raise requests.exceptions.ConnectionError("connection refused")
+
+        monkeypatch.setattr(requests, "get", _boom)
+        result = self._lookup().host_info("192.0.2.1")
+        assert classify(result) == ERROR
+        assert result["status"] == ERROR
+        assert result["error"] == "connection refused"
+
+    def test_search_unexpected_status_is_error(self, monkeypatch):
+        import requests
+        from modules.module_status import classify, ERROR
+
+        class MockResp:
+            status_code = 502
+            text = "bad gateway"
+
+        monkeypatch.setattr(requests, "get", lambda *a, **k: MockResp())
+        result = self._lookup().search("apache")
+        assert classify(result) == ERROR
+        assert result["error"].startswith("Shodan API returned 502")
+
+
+class TestLeakLookupStatus:
+    def _lookup(self):
+        from modules.leak_lookup import LeakLookup
+        ll = LeakLookup()
+        ll.leak_lookup_key = "fakekey"
+        ll.hibp_key = "fakekey"
+        return ll
+
+    def _resp(self, status, payload=None, text=""):
+        class MockResp:
+            status_code = status
+            def json(self):
+                return payload
+        MockResp.text = text
+        return MockResp()
+
+    def test_leak_lookup_not_found_is_ok(self, monkeypatch):
+        import requests
+        from modules.module_status import classify, OK
+
+        resp = self._resp(200, {"message": "Not found"})
+        monkeypatch.setattr(requests, "post", lambda *a, **k: resp)
+        result = self._lookup().check_leak_lookup("clean@example.com")
+        assert classify(result) == OK
+        assert result["found"] is False
+        assert result["error"] is None
+
+    def test_leak_lookup_unknown_message_is_error(self, monkeypatch):
+        import requests
+        from modules.module_status import classify, ERROR
+
+        resp = self._resp(200, {"error": "true", "message": "INVALID TYPE"})
+        monkeypatch.setattr(requests, "post", lambda *a, **k: resp)
+        result = self._lookup().check_leak_lookup("x@example.com")
+        assert classify(result) == ERROR
+        assert result["status"] == ERROR
+        assert result["error"] == "INVALID TYPE"
+
+    def test_leak_lookup_unexpected_status_is_error(self, monkeypatch):
+        import requests
+        from modules.module_status import classify, ERROR
+
+        monkeypatch.setattr(requests, "post", lambda *a, **k: self._resp(500))
+        result = self._lookup().check_leak_lookup("x@example.com")
+        assert classify(result) == ERROR
+        assert result["error"] == "API returned status 500"
+
+    def test_leak_lookup_exception_is_error(self, monkeypatch):
+        import requests
+        from modules.module_status import classify, ERROR
+
+        def _boom(*a, **k):
+            raise RuntimeError("timeout")
+
+        monkeypatch.setattr(requests, "post", _boom)
+        result = self._lookup().check_leak_lookup("x@example.com")
+        assert classify(result) == ERROR
+        assert result["error"] == "timeout"
+
+    @pytest.mark.parametrize("method,label", [
+        ("check_email_hibp", "HIBP returned status 500"),
+        ("check_email_xon", "XposedOrNot returned status 500"),
+        ("check_email_leakcheck", "LeakCheck returned status 500"),
+    ])
+    def test_email_checks_unexpected_status_is_error(self, monkeypatch, method, label):
+        import requests
+        from modules.module_status import classify, ERROR
+
+        monkeypatch.setattr(requests, "get", lambda *a, **k: self._resp(500))
+        result = getattr(self._lookup(), method)("x@example.com")
+        assert classify(result) == ERROR
+        assert result["status"] == ERROR
+        assert result["error"] == label
+
+    @pytest.mark.parametrize("method", ["check_email_hibp", "check_email_xon", "check_email_leakcheck"])
+    def test_email_checks_exception_is_error(self, monkeypatch, method):
+        import requests
+        from modules.module_status import classify, ERROR
+
+        def _boom(*a, **k):
+            raise requests.exceptions.ConnectionError("unreachable")
+
+        monkeypatch.setattr(requests, "get", _boom)
+        result = getattr(self._lookup(), method)("x@example.com")
+        assert classify(result) == ERROR
+        assert result["error"] == "unreachable"
+
+    def test_password_pwned_unexpected_status_is_error(self, monkeypatch):
+        import requests
+        from modules.module_status import classify, ERROR
+
+        monkeypatch.setattr(requests, "get", lambda *a, **k: self._resp(503))
+        result = self._lookup().check_password_pwned("hunter2")
+        assert classify(result) == ERROR
+        assert result["error"] == "API returned status 503"
+
+    def test_password_pwned_exception_is_error(self, monkeypatch):
+        import requests
+        from modules.module_status import classify, ERROR
+
+        def _boom(*a, **k):
+            raise requests.exceptions.Timeout("slow")
+
+        monkeypatch.setattr(requests, "get", _boom)
+        result = self._lookup().check_password_pwned("hunter2")
+        assert classify(result) == ERROR
+        assert result["error"] == "slow"
+
+
 class TestVirusTotal:
     def test_no_api_key(self, monkeypatch):
         from modules.threat_intel import VirusTotal

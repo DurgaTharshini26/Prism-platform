@@ -73,10 +73,10 @@ class LeakLookup:
             elif response.status_code == 429:
                 annotate(result, RATE_LIMITED, "HIBP API rate limit reached")
             else:
-                result["error"] = f"HIBP returned status {response.status_code}"
+                annotate(result, ERROR, f"HIBP returned status {response.status_code}")
 
         except requests.exceptions.RequestException as e:
-            result["error"] = str(e)
+            annotate(result, ERROR, str(e))
 
         return result
 
@@ -117,10 +117,10 @@ class LeakLookup:
             elif response.status_code == 429:
                 annotate(result, RATE_LIMITED, "XposedOrNot rate limit reached")
             else:
-                result["error"] = f"XposedOrNot returned status {response.status_code}"
+                annotate(result, ERROR, f"XposedOrNot returned status {response.status_code}")
 
         except requests.exceptions.RequestException as e:
-            result["error"] = str(e)
+            annotate(result, ERROR, str(e))
 
         return result
 
@@ -162,10 +162,10 @@ class LeakLookup:
             elif response.status_code == 429:
                 annotate(result, RATE_LIMITED, "LeakCheck rate limit reached")
             else:
-                result["error"] = f"LeakCheck returned status {response.status_code}"
+                annotate(result, ERROR, f"LeakCheck returned status {response.status_code}")
 
         except requests.exceptions.RequestException as e:
-            result["error"] = str(e)
+            annotate(result, ERROR, str(e))
 
         return result
 
@@ -197,10 +197,10 @@ class LeakLookup:
                         result["count"] = int(count)
                         break
             else:
-                result["error"] = f"API returned status {response.status_code}"
+                annotate(result, ERROR, f"API returned status {response.status_code}")
 
         except Exception as e:
-            result["error"] = str(e)
+            annotate(result, ERROR, str(e))
 
         return result
 
@@ -242,16 +242,16 @@ class LeakLookup:
                             })
                 elif data.get("message") == "Not found":
                     result["found"] = False
-                    result["status"] = OK
+                    annotate(result, OK)
                 else:
-                    result["error"] = data.get("message", "Unknown response")
+                    annotate(result, ERROR, str(data.get("message", "Unknown response")))
             elif response.status_code == 429:
                 annotate(result, RATE_LIMITED, "Leak-Lookup API rate limit reached")
             else:
-                result["error"] = f"API returned status {response.status_code}"
+                annotate(result, ERROR, f"API returned status {response.status_code}")
 
         except Exception as e:
-            result["error"] = str(e)
+            annotate(result, ERROR, str(e))
 
         return result
 

@@ -96,8 +96,7 @@ class ShodanLookup:
             )
 
             if r.status_code == 404:
-                result["error"] = "No information available for this IP in Shodan"
-                return result
+                return annotate(result, OK, "No information available for this IP in Shodan")
             if r.status_code == 401:
                 return annotate(result, ERROR, "Invalid Shodan API key")
             if r.status_code == 403:
@@ -108,8 +107,7 @@ class ShodanLookup:
             if r.status_code == 429:
                 return self._internetdb(ip, result, "Shodan API rate limit reached")
             if r.status_code != 200:
-                result["error"] = f"Shodan API returned {r.status_code}"
-                return result
+                return annotate(result, ERROR, f"Shodan API returned {r.status_code}")
 
             data = r.json()
 
@@ -174,8 +172,7 @@ class ShodanLookup:
             if r.status_code == 429:
                 return annotate(result, RATE_LIMITED, "Shodan API rate limit reached")
             if r.status_code != 200:
-                result["error"] = f"Shodan API returned {r.status_code}: {r.text[:200]}"
-                return result
+                return annotate(result, ERROR, f"Shodan API returned {r.status_code}: {r.text[:200]}")
 
             data = r.json()
             result["total"] = data.get("total", 0)
