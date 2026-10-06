@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 import { LoadingWrapper } from '@/components/LoadingScreen';
 import { I18nProvider, STORAGE_KEY } from '@/lib/i18n';
+import { PRISM_VERSION } from '@/lib/version';
 
 const SITE_URL = 'https://getprism.su';
 const OG_IMAGE = 'https://raw.githubusercontent.com/NovaCode37/Prism-platform/main/docs/pics/main_showcase/main_showcase.png';
@@ -63,7 +64,7 @@ const JSON_LD = {
   description: DESCRIPTION,
   applicationCategory: 'SecurityApplication',
   operatingSystem: 'Web, Docker, Linux',
-  softwareVersion: '2.10.0',
+  softwareVersion: PRISM_VERSION,
   license: 'https://opensource.org/licenses/MIT',
   sameAs: ['https://github.com/NovaCode37/Prism-platform'],
   author: {

@@ -1,4 +1,7 @@
 import { PHASE_DEVELOPMENT_SERVER } from 'next/constants.js';
+import { createRequire } from 'node:module';
+
+const { version } = createRequire(import.meta.url)('./package.json');
 
 function normalizeBasePath(value = '') {
   const trimmed = value.trim();
@@ -15,6 +18,7 @@ export default function nextConfig(phase) {
     ...(isDevServer ? {} : { output: 'export' }),
     ...(basePath ? { basePath } : {}),
     images: { unoptimized: true },
+    env: { NEXT_PUBLIC_PRISM_VERSION: version },
     allowedDevOrigins: ['127.0.0.1', 'localhost'],
     ...(isDevServer ? {
       async rewrites() {

@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
+import { PRISM_VERSION } from '@/lib/version';
 
 const MODULES = [
   { id: 'core',    label: 'CORE SYSTEMS',   prefix: '[SYS]' },
@@ -106,7 +107,7 @@ function LoadingScreen({ fading, onDone }: { fading: boolean; onDone: () => void
       setTimeout(() => setActiveModules(prev => [...prev, i]), 350 + i * 520);
     });
 
-    const bootText = '> PRISM OSINT v2.10.0 - boot sequence initiated...';
+    const bootText = `> PRISM OSINT v${PRISM_VERSION} - boot sequence initiated...`;
     let charIdx = 0;
     const typeTimer = setInterval(() => {
       if (charIdx <= bootText.length) {
@@ -161,7 +162,7 @@ function LoadingScreen({ fading, onDone }: { fading: boolean; onDone: () => void
       </div>
 
       <div className="prism-loading-text">PRISM</div>
-      <div className="prism-loading-sub">OSINT Platform v2.10.0</div>
+      <div className="prism-loading-sub">OSINT Platform v{PRISM_VERSION}</div>
 
       <div className="prism-status-bar">
         <div className="prism-status-text">{STATUSES[statusIdx]}</div>
