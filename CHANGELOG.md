@@ -6,6 +6,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [2.12.1] — 2026-10-06
+
+### Fixed
+- **The version shown in the interface was two releases behind.** The header badge, the boot screen and the `SoftwareApplication` structured data each spelled out `2.10.0`, so bumping `package.json` never reached the UI. All three now read the version that the build injects from `package.json`, and `npm run test:version` fails if the frontend, `package-lock.json` and `config.py` disagree or if any of those files spells a version out again.
+
+---
+
 ## [2.12.0] — 2026-10-06
 
 Most of this release is contributor work from Hacktoberfest. Names are on the pull requests.
