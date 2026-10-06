@@ -27,7 +27,7 @@ LLM_TIMEOUT = int(os.getenv("LLM_TIMEOUT", "30"))
 
 OUTPUT_DIR = os.path.join(os.path.dirname(__file__), "results")
 os.makedirs(OUTPUT_DIR, exist_ok=True)
-PRISM_VERSION = "2.11.0"
+PRISM_VERSION = "2.12.0"
 USER_AGENT = f"PRISM-OSINT/{PRISM_VERSION} (+https://github.com/NovaCode37/Prism-platform)"
 
 class Colors:

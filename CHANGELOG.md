@@ -6,6 +6,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [2.12.0] — 2026-10-06
+
+Most of this release is contributor work from Hacktoberfest. Names are on the pull requests.
+
+### Added
+- **An experimental OSINT agent** under `experiments/agent`. It plans which modules to run against one target, and it is deliberately fenced in: it cannot pivot to any other target, it has a step and module budget, and every claim in its final answer has to name the module result it came from or it is dropped. `--plan` prints the plan without running anything. It is a proof of concept, not part of a scan (#459, #466).
+- **Graph export from the CLI** in GraphML and GEXF, so a scan can be opened in Gephi or yEd instead of only the built-in view (#440).
+
+### Changed
+- **The OPSEC score can now say it does not know.** It started at 100 and only subtracted, so a scan where every module failed still reported **100 / MINIMAL**, which reads as "nothing exposed". When no module returns usable data the result is now `score: null` with `risk_level: "NOT_ASSESSED"` and a reason. The dashboard, the HTML and PDF reports, the CLI summary and both webhook formats render that state (#434, #489).
+  - **For API consumers:** `opsec_score.score` can be `null` where it was always a number, and `risk_level` has a sixth value. Code that formats the score needs to handle both.
+- **Modules say how a lookup ended instead of leaving it to be guessed from an error string.** Each result carries `ok`, `skipped`, `rate_limited` or `error` with a reason, so a missing API key no longer looks like a failure and a throttled source no longer looks like an empty one. This release moves over certificate transparency and Wayback (#469, #473), WHOIS, GeoIP, DNS and the site analyser (#474, #478), Shodan and the breach providers (#475, #488), and the file metadata extractor (#492, #495). A Shodan `404` and a GitHub user that does not exist are answers now, not errors.
+- **The subnet calculator is translated.** Its labels were hardcoded English in every language (#465, #467). Earlier passes covered the card tooltips (#437, #439) and the remaining aria-labels (#444).
+- **One CoinGecko request instead of three.** The crypto panel asked for each coin separately and the result is cached, which is what kept it inside the free tier (#447, #450).
+- **Censys documentation names the variables the code actually reads.** The docs and the UI hint still asked for `CENSYS_API_ID` and `CENSYS_API_SECRET`, which nothing has read since the move to the Platform API, so anyone following them got a silently skipped module. It is `CENSYS_PAT`, with `CENSYS_ORG_ID` only for organisation-scoped tokens (#490, #494).
+- `prism --modules` rejects names that do not exist or do not apply to the target type, rather than warning and running nothing (#438).
+
+### Fixed
+- **Reading file metadata crashed on a missing path.** `os.path.getsize` sat in the result dict, outside the `try`, so the PDF and DOCX extractors raised `FileNotFoundError` before any error handling ran (#492, #495).
+- **GPS coordinates came out mirrored.** The south and west reference flags were not applied, so a photo from the southern or western hemisphere was placed on the wrong side of the equator or the meridian (#412, #468).
+- **A rate-limited GitHub lookup reported success** with empty repositories and events, which reads as "this user has nothing" (#452). The GitHub card now shows what was not checked (#462).
+- **HLR lookups hid which source failed** and returned a blank result instead (#454, #455).
+- **The crypto panel explained nothing when a USD value was missing** (#460).
+- Watchlist ids are validated as UUIDs the way scan ids already were, and a malformed one answers `404` instead of reaching the path join (#391, #476).
+
+### Security
+- **The webhook could be pointed at an internal address after the check passed.** The destination was resolved and validated, then resolved again when the request went out, so a DNS answer that changed in between was never re-checked. Delivery now connects to the address that passed, with the original hostname kept for TLS, SNI and the `Host` header. Redirects stay disabled (#348, #471).
+- **Next.js updated to 16.3.8**, which carries a fix for a remote code execution in `next/og`. PRISM does not use `next/og`, so it was not reachable here.
+- **The upload size limit is enforced on the body** of `/api/metadata` rather than trusting the `Content-Length` header, and the header itself is parsed defensively (#449).
+- **Numverify no longer falls back to plain HTTP on its own.** The free tier is HTTP-only, so the fallback existed, but it now needs `NUMVERIFY_ALLOW_HTTP` to be set explicitly (#463).
+- CodeQL analysis is scoped to source files, so it stops scanning vendored and generated code (#443).
+- Dependency bumps from Dependabot: fastapi, uvicorn, phonenumbers, python-dotenv, xhtml2pdf, postcss-selector-parser and `@types/node`.
+
+---
+
 ## [2.11.0] — 2026-09-28
 
 ### Changed
