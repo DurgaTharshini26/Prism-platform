@@ -159,7 +159,7 @@ prism.example.com {
 | `GROQ_API_KEY`                    | AI fallback (Llama-3 instant)        | Free tier        |
 | `TELEGRAM_BOT_TOKEN`              | Telegram user lookup                 | Free             |
 | `LEAK_LOOKUP_API_KEY`             | Breach database                      | Limited free     |
-| `GITHUB_TOKEN`                    | GitHub recon rate limit bypass       | Free             |
+| `GITHUB_TOKEN`                    | GitHub recon, 5,000 req/h instead of 60 | Free          |
 
 ## Variables
 
