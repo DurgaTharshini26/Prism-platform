@@ -176,7 +176,7 @@ class LeakLookup:
             "error": None
         }
 
-        sha1_hash = hashlib.sha1(password.encode('utf-8'), usedforsecurity=False).hexdigest().upper()
+        sha1_hash = hashlib.sha1(password.encode('utf-8')).hexdigest().upper()
         prefix = sha1_hash[:5]
         suffix = sha1_hash[5:]
 
